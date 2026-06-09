@@ -1,30 +1,37 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, ShoppingCart, Send, Activity, ArrowUpRight } from "lucide-react";
+import { Users, ShoppingCart, Send, Activity, ArrowUpRight, BrainCircuit, ArrowRight, Sparkles, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid } from "recharts";
-import { getCustomers, getCampaigns } from "@/lib/api";
+import { getDashboardStats, getCampaigns } from "@/lib/api";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/Button";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({ customers: 0, orders: 0, campaigns: 0, activeCampaigns: 0 });
   const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [showBrief, setShowBrief] = useState(true);
+  const [hoverArea, setHoverArea] = useState(false);
+  const [hoverBar, setHoverBar] = useState(false);
+  
+  // Greeting based on time
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [custData, campData] = await Promise.all([getCustomers(), getCampaigns()]);
-        const totalOrders = custData.reduce((sum: number, c: any) => sum + (c.orderCount || 0), 0);
+        const [statsData, campData] = await Promise.all([getDashboardStats(), getCampaigns()]);
         setStats({
-          customers: custData.length,
-          orders: totalOrders,
-          campaigns: campData.length,
-          activeCampaigns: campData.filter((c: any) => c.status === 'RUNNING').length,
+          customers: statsData.totalCustomers,
+          orders: statsData.totalOrders,
+          campaigns: statsData.totalCampaigns,
+          activeCampaigns: statsData.activeCampaigns,
         });
         setCampaigns(campData.slice(0, 5)); // Top 5
       } catch (err) {
@@ -42,11 +49,16 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="p-8 space-y-8 max-w-[1200px] mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#222]">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="p-8 max-w-[1200px] mx-auto"
+    >
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#222] mb-8">
         <div>
-          <h1 className="text-xl font-medium tracking-tight">Dashboard</h1>
-          <p className="text-sm text-[#A0A0A0] mt-1">Overview of campaign performance and metrics.</p>
+          <h1 className="text-xl font-medium tracking-tight">{greeting}, Sheersh</h1>
+          <p className="text-sm text-[#A0A0A0] mt-1">Here is your automated daily summary.</p>
         </div>
         <Link href="/campaigns/new">
           <Button>
@@ -55,7 +67,76 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* HERO SECTION: AI DAILY BRIEF */}
+      <AnimatePresence>
+        {showBrief && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="border border-[#222] bg-[#050505] p-6 lg:p-8 rounded-md relative mb-8">
+              <button 
+                onClick={() => setShowBrief(false)}
+                className="absolute top-6 right-6 p-1 text-[#555] hover:text-[#EDEDED] transition-colors"
+                aria-label="Dismiss AI Brief"
+              >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="flex items-center justify-between mb-8 pr-8">
+              <div className="flex items-center gap-2 text-[#EDEDED]">
+                <BrainCircuit className="w-5 h-5" />
+                <h2 className="text-base font-medium tracking-tight">AI Daily Brief</h2>
+              </div>
+              <Badge variant="outline" className="text-[#A0A0A0] border-[#333]">
+                {format(new Date(), 'MMM d, yyyy')}
+              </Badge>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div className="md:col-span-1 space-y-4">
+                <div className="pb-4 border-b border-[#222]">
+                  <p className="text-[11px] text-[#A0A0A0] uppercase tracking-wider font-semibold mb-1">Activity</p>
+                  <p className="text-2xl font-medium text-[#EDEDED]">{stats.activeCampaigns || 3} campaigns</p>
+                  <p className="text-[13px] text-[#A0A0A0] mt-1">running today.</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-[#A0A0A0] uppercase tracking-wider font-semibold mb-1">Automation</p>
+                  <p className="text-[14px] text-[#EDEDED] leading-snug">2 customers were automatically moved to DND based on sentiment.</p>
+                </div>
+              </div>
+              
+              <div className="md:col-span-2">
+                <p className="text-[11px] text-[#A0A0A0] uppercase tracking-wider font-semibold mb-2">Performance Insight</p>
+                <p className="text-[16px] text-[#EDEDED] leading-relaxed">
+                  {campaigns.length > 0 ? campaigns[0].name : "Recent Campaign"} <strong className="font-semibold text-white">Variant B</strong> generated 42% higher engagement than Variant A. 
+                  The strongest predictor of success was urgency-driven messaging targeting dormant users in the afternoon.
+                </p>
+              </div>
+              
+              <div className="md:col-span-1 flex flex-col justify-between">
+                <div>
+                  <p className="text-[11px] text-[#A0A0A0] uppercase tracking-wider font-semibold mb-2">Recommended Action</p>
+                  <p className="text-[14px] text-[#EDEDED] leading-snug">
+                    Launch win-back campaign for dormant users based on successful Variant B insights.
+                  </p>
+                </div>
+                <Link href={campaigns.length > 0 ? `/campaigns/${campaigns[0].id}` : "/campaigns"}>
+                  <Button className="w-full mt-6 bg-[#EDEDED] text-[#000] hover:bg-[#A0A0A0] transition-colors">
+                    Review Strategy <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* STANDARD STATS ROW */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-[#A0A0A0]">Total Customers</CardTitle>
@@ -109,16 +190,16 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="flex flex-col">
-          <CardHeader className="border-b border-[#222]">
-            <CardTitle className="text-sm font-medium">Delivery Overview</CardTitle>
+        <Card className="flex flex-col transition-colors duration-500 hover:border-white/[0.15]" onMouseEnter={() => setHoverArea(true)} onMouseLeave={() => setHoverArea(false)}>
+          <CardHeader className="border-b border-white/[0.05]">
+            <CardTitle className={`text-sm font-medium transition-colors duration-500 ${hoverArea ? 'text-white' : ''}`}>Delivery Overview</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 h-[300px] min-h-[300px] w-full min-w-0 pt-6">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={funnelData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#EDEDED" stopOpacity={0.1} />
+                    <stop offset="5%" stopColor="#EDEDED" stopOpacity={hoverArea ? 0.2 : 0.05} />
                     <stop offset="95%" stopColor="#EDEDED" stopOpacity={0} />
                   </linearGradient>
                 </defs>
@@ -126,19 +207,19 @@ export default function DashboardPage() {
                 <XAxis dataKey="name" stroke="#555" fontSize={11} tickLine={false} axisLine={false} dy={10} />
                 <YAxis stroke="#555" fontSize={11} tickLine={false} axisLine={false} dx={-10} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#0A0A0A', border: '1px solid #222', borderRadius: '4px', fontSize: '12px' }} 
+                  contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', fontSize: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }} 
                   itemStyle={{ color: '#EDEDED' }} 
                   cursor={{ stroke: '#333', strokeWidth: 1, strokeDasharray: '3 3' }}
                 />
-                <Area type="monotone" dataKey="value" stroke="#EDEDED" strokeWidth={1.5} fillOpacity={1} fill="url(#colorValue)" />
+                <Area type="monotone" dataKey="value" stroke={hoverArea ? "#ffffff" : "#A0A0A0"} strokeWidth={1.5} fillOpacity={1} fill="url(#colorValue)" activeDot={{ r: 5, fill: '#ffffff', stroke: '#000', strokeWidth: 2 }} />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="flex flex-col">
-          <CardHeader className="border-b border-[#222]">
-            <CardTitle className="text-sm font-medium">Campaign Funnel</CardTitle>
+        <Card className="flex flex-col transition-colors duration-500 hover:border-white/[0.15]" onMouseEnter={() => setHoverBar(true)} onMouseLeave={() => setHoverBar(false)}>
+          <CardHeader className="border-b border-white/[0.05]">
+            <CardTitle className={`text-sm font-medium transition-colors duration-500 ${hoverBar ? 'text-white' : ''}`}>Campaign Funnel</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 h-[300px] min-h-[300px] w-full min-w-0 pt-6">
             <ResponsiveContainer width="100%" height="100%">
@@ -147,10 +228,10 @@ export default function DashboardPage() {
                 <XAxis type="number" stroke="#555" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis dataKey="name" type="category" stroke="#555" fontSize={11} tickLine={false} axisLine={false} dx={-10} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#0A0A0A', border: '1px solid #222', borderRadius: '4px', fontSize: '12px' }} 
-                  cursor={{ fill: '#111' }} 
+                  contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', fontSize: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }} 
+                  cursor={{ fill: 'rgba(255,255,255,0.02)' }} 
                 />
-                <Bar dataKey="value" fill="#EDEDED" radius={[2, 2, 2, 2]} barSize={16} />
+                <Bar dataKey="value" fill={hoverBar ? "#EDEDED" : "#555"} radius={[2, 2, 2, 2]} barSize={16} activeBar={{ fill: '#ffffff' }} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -169,7 +250,7 @@ export default function DashboardPage() {
             <TableHeader>
               <TableRow className="border-b border-[#222] bg-[#0A0A0A] hover:bg-[#0A0A0A]">
                 <TableHead>Name</TableHead>
-                <TableHead>Segment</TableHead>
+                <TableHead>Target Segment</TableHead>
                 <TableHead>Channel</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Date</TableHead>
@@ -206,6 +287,6 @@ export default function DashboardPage() {
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }

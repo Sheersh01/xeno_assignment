@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body suppressHydrationWarning className={`${inter.variable} antialiased flex h-screen overflow-hidden bg-[#0B0D0F] text-[#F8F9FA]`}>
+      <body suppressHydrationWarning className={`${inter.variable} antialiased flex h-screen overflow-hidden bg-[#000000] text-[#EDEDED] selection:bg-white/20`}>
         <Sidebar />
         <main className="flex-1 overflow-y-auto">
           {children}

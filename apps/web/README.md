@@ -5,9 +5,10 @@ The **CRM Frontend** is the user-facing interface for the Xeno AI-Native Mini CR
 It is built with **Next.js 16** (App Router) and serves as a highly interactive, heavily polished dashboard for marketers to build AI audiences, generate campaigns, and view live delivery telemetry.
 
 ## 🎯 Design Philosophy
-We deliberately avoided standard "generic SaaS templates" or over-used Tailwind defaults. The application follows a **Premium, Dark-Mode First** design aesthetic heavily inspired by enterprise tools like Linear, Vercel, and Raycast.
-- **Palette**: Deep charcoal backgrounds (`#0B0D0F`), elevated panels (`#111417`), subtle borders (`#1E2329`), and a sharp purple accent (`#8B5CF6`).
-- **Typography**: Clean and confident, utilizing the `Inter` font.
+We deliberately avoided standard "generic SaaS templates" or over-used Tailwind defaults. The application follows a **Premium, Minimalist** design aesthetic heavily inspired by enterprise developer tools like Vercel and Next.js.
+- **Palette**: Pure black backgrounds (`#000000`), monochrome high-contrast text (`#EDEDED` vs `#000`), and subtle glassy borders (`border-white/10`) with `white/[0.02]` linear gradients instead of flat boxes.
+- **Interactivity**: Fluid glowing hover states (`shadow-[0_8px_30px_rgba(255,255,255,0.04)]`) and fully monochromatic Recharts components that elegantly react to user presence.
+- **Typography**: Clean, tightly tracked (`tracking-tight`), utilizing the `Inter` font for a strict, editorial feel.
 - **UI Primitives**: All components (Buttons, Cards, Inputs, Dialogs) were built natively using Tailwind and Radix UI rather than dropping in a bulky pre-styled component library.
 
 ## 🏗 Core Screens & Architecture
@@ -30,6 +31,7 @@ We deliberately avoided standard "generic SaaS templates" or over-used Tailwind 
 - **A/B Testing UI Integration**: Redesigned the Campaign Details dashboard to gracefully handle the complex `isTestingPhase` state, rendering live split-test statistics before transitioning to a "Winner Selected" insight view.
 - **Debounced Search with Caching**: The `/customers` directory now utilizes a custom `useDebounce` hook to delay backend search queries by 300ms, coupled with a `Map` cache to instantly render previously searched queries without redundant network calls.
 - **Live Polling Fix**: Resolved an issue in the `/campaigns/[id]` Live Activity Feed where real-time stats would briefly reset to 0 by perfectly mapping the polling schema to the initial SSR state.
+- **Next.js Premium UI Aesthetics**: Refactored the entire frontend to use a dark monochrome color palette, subtle glassmorphism (`bg-gradient-to-b from-white/[0.02]`), negative letter-spacing typography, and dynamic glow interactions that perfectly mirror modern developer-first tooling.
 
 ## 📦 Setup & Installation
 

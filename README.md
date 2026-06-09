@@ -113,6 +113,8 @@ Every Gemini call is wrapped in try/catch with a predictable fallback object. Th
 - **Scalable Customer Search**: Moved from client-side array filtering to a robust server-side database search using Prisma's `contains` filter. The frontend now features a custom `useDebounce` hook (300ms) and local memory caching (`Map`) to prevent unnecessary network requests.
 - **Campaign Payload Optimization**: Fixed an `AxiosError: Network Error` crash that occurred when loading large campaigns. The `getCampaignById` endpoint now paginates nested communications (`take: 15`), drastically reducing the JSON payload size and preventing Node.js Out-Of-Memory errors.
 - **Live Stats Polling Fix**: Fixed a bug where the Live Activity Feed stats would reset to `0` after the initial page load by aligning the backend API response keys (`sentCount`, `deliveredCount`) with the frontend state expectations.
+- **Vercel/Next.js Premium UI Aesthetics**: Refactored the entire frontend to use a strict monochrome color palette (`#000`), subtle glassmorphism (`bg-gradient-to-b from-white/[0.02]`), negative letter-spacing typography, and dynamic glow interactions that match enterprise developer-first styling.
+- **Accurate Global Analytics**: Added a dedicated `GET /stats` backend endpoint leveraging database-level `COUNT()` queries to provide hyper-accurate global metrics on the Dashboard, completely decoupling it from the network payload limitations of the `GET /customers` search route.
 
 ---
 

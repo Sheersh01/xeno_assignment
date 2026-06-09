@@ -98,10 +98,10 @@ export default function NewCampaignPage() {
       <div className="flex items-center gap-2 mb-8">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="flex items-center gap-2">
-            <div className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold ${step >= i ? 'bg-[#EDEDED] text-[#000]' : 'bg-[#111] text-[#555] border border-[#222]'}`}>
+            <div className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold transition-colors ${step >= i ? 'bg-indigo-500 text-white shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-[#111] text-[#555] border border-[#222]'}`}>
               {step > i ? <Check className="w-3 h-3" /> : i}
             </div>
-            {i < 4 && <div className={`w-8 h-[1px] ${step > i ? 'bg-[#555]' : 'bg-[#222]'}`} />}
+            {i < 4 && <div className={`w-8 h-[2px] transition-colors ${step > i ? 'bg-indigo-500/50' : 'bg-[#222]'}`} />}
           </div>
         ))}
       </div>
@@ -113,21 +113,21 @@ export default function NewCampaignPage() {
             {segments.map((s) => (
               <Card 
                 key={s.id} 
-                className={`cursor-pointer transition-colors hover:border-[#555] ${segmentId === s.id ? 'border-[#EDEDED] ring-1 ring-[#EDEDED]' : ''}`}
+                className={`cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:border-indigo-500/50 hover:shadow-[0_4px_20px_rgba(99,102,241,0.1)] group ${segmentId === s.id ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-500/5' : ''}`}
                 onClick={() => setSegment(s.id, s.name, s.description || "Segment")}
               >
-                <CardHeader className="border-b border-[#222] pb-3">
-                  <CardTitle className="text-[13px]">{s.name}</CardTitle>
+                <CardHeader className="border-b border-[#222] pb-3 group-hover:border-indigo-500/20 transition-colors">
+                  <CardTitle className={`text-[13px] transition-colors ${segmentId === s.id ? 'text-indigo-400' : 'group-hover:text-indigo-400'}`}>{s.name}</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4">
-                  <CardDescription className="line-clamp-2 text-[12px] mb-4">{s.description}</CardDescription>
-                  <Badge variant="outline">{s.audienceSize} Customers</Badge>
+                  <CardDescription className="line-clamp-2 text-[12px] mb-4 group-hover:text-[#AAA] transition-colors">{s.description}</CardDescription>
+                  <Badge variant="outline" className={`transition-colors ${segmentId === s.id ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'group-hover:border-indigo-500/30 group-hover:text-indigo-300'}`}>{s.audienceSize} Customers</Badge>
                 </CardContent>
               </Card>
             ))}
           </div>
           <div className="flex justify-end mt-6">
-            <Button disabled={!segmentId} onClick={() => setStep(2)}>Next <ArrowRight className="w-3.5 h-3.5 ml-2" /></Button>
+            <Button disabled={!segmentId} onClick={() => setStep(2)} className="hover:bg-indigo-500 hover:text-white transition-colors hover:shadow-[0_0_15px_rgba(99,102,241,0.4)]">Next <ArrowRight className="w-3.5 h-3.5 ml-2" /></Button>
           </div>
         </div>
       )}
@@ -139,12 +139,12 @@ export default function NewCampaignPage() {
             <CardContent className="pt-6 space-y-6">
               <div className="space-y-2">
                 <label className="text-[11px] uppercase tracking-wider font-semibold text-[#A0A0A0]">Campaign Goal</label>
-                <Input 
-                  placeholder="e.g. Win back customers with a 20% discount" 
-                  value={goal}
-                  onChange={(e) => setGoal(e.target.value)}
-                  className="bg-[#000]"
-                />
+                  <Input 
+                    placeholder="e.g. Win back customers with a 20% discount" 
+                    value={goal}
+                    onChange={(e) => setGoal(e.target.value)}
+                    className="bg-[#000] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all hover:border-indigo-500/50"
+                  />
               </div>
               <div className="p-4 bg-[#000] rounded border border-[#222]">
                 <p className="text-[10px] text-[#A0A0A0] uppercase font-semibold mb-2 tracking-wider">Targeting</p>
@@ -154,8 +154,8 @@ export default function NewCampaignPage() {
             </CardContent>
           </Card>
           <div className="flex justify-between mt-6">
-            <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="w-3.5 h-3.5 mr-2" /> Back</Button>
-            <Button onClick={handleGenerateMessage} disabled={!goal || loading}>
+            <Button variant="outline" onClick={() => setStep(1)} className="hover:text-indigo-400 hover:border-indigo-500/50 transition-colors"><ArrowLeft className="w-3.5 h-3.5 mr-2" /> Back</Button>
+            <Button onClick={handleGenerateMessage} disabled={!goal || loading} className="hover:bg-indigo-500 hover:text-white transition-all hover:shadow-[0_0_15px_rgba(99,102,241,0.4)]">
               {loading ? "Generating Variants..." : "Generate 3 Variants"} <Sparkles className="w-3.5 h-3.5 ml-2" />
             </Button>
           </div>
@@ -163,39 +163,61 @@ export default function NewCampaignPage() {
       )}
 
       {step === 3 && (
-        <div className="space-y-6">
-          <h2 className="text-sm font-medium">Review Variants & Select Channel</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {variants.map((variant, idx) => (
-              <Card key={idx}>
-                <CardHeader className="border-b border-[#222]">
-                  <CardTitle className="text-[12px] font-semibold uppercase tracking-wider text-[#A0A0A0]">Variant {String.fromCharCode(65 + idx)}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 pt-4">
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-xl font-medium tracking-tight mb-2">Review Variants</h2>
+            <p className="text-sm text-[#A0A0A0]">Fine-tune the AI-generated copy. The system will automatically run multivariate tests on these.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {variants.map((variant, idx) => {
+              const themeColors = [
+                { ring: 'focus-within:ring-white/10', border: 'focus-within:border-white/20', hover: 'hover:border-white/20 hover:shadow-[0_8px_30px_rgba(255,255,255,0.04)]', headerBg: 'group-focus-within:bg-white/[0.03]', iconBg: 'bg-[#111] text-white border border-[#333] shadow-sm', inputBorder: 'focus:border-white/30', text: 'group-focus-within:text-white' },
+                { ring: 'focus-within:ring-white/10', border: 'focus-within:border-white/20', hover: 'hover:border-white/20 hover:shadow-[0_8px_30px_rgba(255,255,255,0.04)]', headerBg: 'group-focus-within:bg-white/[0.03]', iconBg: 'bg-[#111] text-white border border-[#333] shadow-sm', inputBorder: 'focus:border-white/30', text: 'group-focus-within:text-white' },
+                { ring: 'focus-within:ring-white/10', border: 'focus-within:border-white/20', hover: 'hover:border-white/20 hover:shadow-[0_8px_30px_rgba(255,255,255,0.04)]', headerBg: 'group-focus-within:bg-white/[0.03]', iconBg: 'bg-[#111] text-white border border-[#333] shadow-sm', inputBorder: 'focus:border-white/30', text: 'group-focus-within:text-white' }
+              ];
+              const theme = themeColors[idx % 3];
+
+              return (
+              <div key={idx} className={`flex flex-col bg-[#050505] border border-[#222] rounded-lg overflow-hidden group focus-within:ring-2 transition-all duration-300 hover:-translate-y-1 ${theme.ring} ${theme.border} ${theme.hover}`}>
+                <div className={`px-5 py-4 border-b border-[#222] bg-[#0A0A0A] flex justify-between items-center transition-colors duration-300 ${theme.headerBg}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-colors ${theme.iconBg}`}>
+                      {String.fromCharCode(65 + idx)}
+                    </div>
+                    <span className={`text-[13px] font-medium text-[#EDEDED] transition-colors ${theme.text}`}>Variant {String.fromCharCode(65 + idx)}</span>
+                  </div>
+                  <Badge variant="outline" className={`text-[10px] bg-transparent border-[#333] text-[#A0A0A0] transition-colors ${theme.text}`}>AI Generated</Badge>
+                </div>
+                
+                <div className="p-5 space-y-6 flex-1 flex flex-col group-hover:bg-[#080808] transition-colors duration-300">
                   <div className="space-y-2">
-                    <label className="text-[11px] uppercase tracking-wider font-semibold text-[#A0A0A0]">Subject</label>
+                    <label className="text-[11px] font-medium text-[#777]">Subject</label>
                     <Input 
                       value={variant.subject} 
                       onChange={(e) => handleVariantChange(idx, 'subject', e.target.value)} 
-                      className="bg-[#000] text-[13px]"
+                      className={`bg-[#0A0A0A] border-[#222] text-[14px] font-medium text-[#EDEDED] shadow-sm transition-colors ${theme.inputBorder}`}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[11px] uppercase tracking-wider font-semibold text-[#A0A0A0]">Message</label>
+                  
+                  <div className="space-y-2 flex-1 flex flex-col">
+                    <label className="text-[11px] font-medium text-[#777]">Message Body</label>
                     <Textarea 
                       value={variant.message} 
                       onChange={(e) => handleVariantChange(idx, 'message', e.target.value)} 
-                      className="h-32 text-[13px] bg-[#000]" 
+                      className={`bg-[#0A0A0A] border-[#222] min-h-[180px] text-[13px] text-[#A0A0A0] resize-none flex-1 leading-relaxed shadow-sm transition-colors ${theme.inputBorder}`} 
                     />
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              </div>
+            )})}
           </div>
 
-          <div className="flex justify-between mt-6">
-            <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="w-3.5 h-3.5 mr-2" /> Back</Button>
-            <Button onClick={handleGetRecommendation} disabled={variants.length === 0 || loading}>
+          <div className="flex justify-between items-center pt-6 mt-4 border-t border-[#222]">
+            <Button variant="outline" onClick={() => setStep(2)} className="h-10 px-6 text-[13px] hover:text-indigo-400 hover:border-indigo-500/50 transition-colors">
+              <ArrowLeft className="w-3.5 h-3.5 mr-2" /> Back
+            </Button>
+            <Button onClick={handleGetRecommendation} disabled={variants.length === 0 || loading} className="h-10 px-6 text-[13px] hover:bg-indigo-500 hover:text-white transition-all hover:shadow-[0_0_15px_rgba(99,102,241,0.4)]">
               {loading ? "Analyzing..." : "Get Channel Recommendation"} <Sparkles className="w-3.5 h-3.5 ml-2" />
             </Button>
           </div>
@@ -262,8 +284,8 @@ export default function NewCampaignPage() {
           </div>
 
           <div className="flex justify-between mt-6">
-            <Button variant="outline" onClick={() => setStep(3)}><ArrowLeft className="w-3.5 h-3.5 mr-2" /> Back</Button>
-            <Button onClick={handleCreate} disabled={loading}>
+            <Button variant="outline" onClick={() => setStep(3)} className="hover:text-indigo-400 hover:border-indigo-500/50 transition-colors"><ArrowLeft className="w-3.5 h-3.5 mr-2" /> Back</Button>
+            <Button onClick={handleCreate} disabled={loading} className="bg-indigo-600 text-white hover:bg-indigo-500 transition-all shadow-[0_0_15px_rgba(79,70,229,0.5)] border-none">
               {loading ? "Creating..." : "Launch Experiment"} <Send className="w-3.5 h-3.5 ml-2" />
             </Button>
           </div>

@@ -6,6 +6,7 @@ const api = axios.create({
 
 // Customers
 export const getCustomers = async (query?: string) => (await api.get("/customers", { params: { query } })).data;
+export const getDashboardStats = async () => (await api.get("/stats")).data;
 
 // Segments
 export const getSegments = async () => (await api.get("/segments")).data;

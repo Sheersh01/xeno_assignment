@@ -36,12 +36,15 @@ createBullBoard({
 
 app.use("/admin/queues", serverAdapter.getRouter());
 
+import statsRoutes from "./routes/stats.routes";
+
 app.use("/health", healthRoutes);
 app.use("/customers", customerRoutes);
 app.use("/segments", segmentRoutes);
 app.use("/campaigns", campaignRoutes);
 app.use("/webhook", webhookRoutes);
 app.use("/ai", aiRoutes);
+app.use("/stats", statsRoutes);
 
 const PORT = 4000;
 

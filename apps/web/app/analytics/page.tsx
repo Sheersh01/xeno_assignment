@@ -4,10 +4,14 @@ import { useEffect, useState } from "react";
 import { getCampaigns } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from "recharts";
-import { Sparkles, TrendingUp, Presentation } from "lucide-react";
+import { Sparkles, TrendingUp, Presentation, BrainCircuit, Lightbulb, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AnalyticsPage() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [showBrief, setShowBrief] = useState(true);
+  const [hoverLine, setHoverLine] = useState(false);
+  const [hoverBar, setHoverBar] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -30,11 +34,14 @@ export default function AnalyticsPage() {
     failed: c.stats?.failedCount || 0
   }));
 
-  const insights = campaigns.filter(c => c.aiInsight).slice(0, 3);
-
   return (
-    <div className="p-8 space-y-8 max-w-[1200px] mx-auto">
-      <div className="flex items-center justify-between pb-4 border-b border-[#222]">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="p-8 max-w-[1200px] mx-auto"
+    >
+      <div className="flex items-center justify-between pb-4 border-b border-[#222] mb-8">
         <div>
           <h1 className="text-xl font-medium tracking-tight">Executive Analytics</h1>
           <p className="text-sm text-[#A0A0A0] mt-1">High-level presentation-ready performance report.</p>
@@ -42,47 +49,66 @@ export default function AnalyticsPage() {
         <Presentation className="w-5 h-5 text-[#555]" />
       </div>
 
-      <Card className="border-[#222] bg-[#050505]">
-        <CardContent className="pt-6 flex gap-4 items-start">
-          <div className="w-8 h-8 rounded border border-[#333] bg-[#111] flex items-center justify-center shrink-0 mt-0.5">
-            <Sparkles className="w-4 h-4 text-[#EDEDED]" />
-          </div>
-          <div>
-            <h3 className="font-medium text-[15px] text-[#EDEDED] mb-1">Global Insight</h3>
-            <p className="text-[#A0A0A0] text-[13px] leading-relaxed">
-              Customers who opened campaigns were <strong className="text-[#EDEDED] font-semibold">3.2× more likely</strong> to click. 
-              Dormant customers responded best through <strong className="text-[#EDEDED] font-semibold">Email</strong> campaigns.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {insights.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-sm font-medium flex items-center gap-2 text-[#EDEDED]">
-            <Sparkles className="w-4 h-4 text-[#555]" />
-            Executive Summary
-          </h2>
-          <div className="grid grid-cols-3 gap-4">
-            {insights.map(c => (
-              <Card key={c.id} className="border-[#222] bg-[#0A0A0A]">
-                <CardHeader className="pb-2 border-b border-[#222]">
-                  <CardTitle className="text-[10px] text-[#A0A0A0] font-semibold uppercase tracking-wider">{c.name}</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <p className="text-[13px] text-[#EDEDED] leading-relaxed">{c.aiInsight}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* HERO SECTION: EXECUTIVE BRIEF */}
+      <AnimatePresence>
+        {showBrief && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="border border-[#222] bg-[#050505] p-6 lg:p-8 rounded-md relative mb-8">
+              <button 
+                onClick={() => setShowBrief(false)}
+                className="absolute top-6 right-6 p-1 text-[#555] hover:text-[#EDEDED] transition-colors"
+                aria-label="Dismiss Executive Brief"
+              >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-2 mb-6 text-[#EDEDED] pr-8">
+              <BrainCircuit className="w-5 h-5" />
+              <h2 className="text-base font-medium tracking-tight">Executive Brief</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div className="md:col-span-3 space-y-6">
+                <div>
+                  <p className="text-[11px] text-[#A0A0A0] uppercase tracking-wider font-semibold mb-2">Performance Summary</p>
+                  <p className="text-[16px] text-[#EDEDED] leading-relaxed">
+                    This week's campaigns exceeded expected engagement by <strong className="font-semibold text-white">18%</strong>. 
+                    The strongest predictor of success was urgency-driven messaging targeting dormant customers.
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-[#A0A0A0] uppercase tracking-wider font-semibold mb-2">Emerging Trends</p>
+                  <p className="text-[14px] text-[#A0A0A0] leading-relaxed">
+                    Returning customers show signs of message fatigue, with open rates dropping by 4% over the last 3 touchpoints.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="md:col-span-1 p-5 bg-[#111] rounded border border-[#222] flex flex-col justify-center">
+                <div className="flex items-center gap-2 mb-3">
+                  <Lightbulb className="w-4 h-4 text-[#EDEDED]" />
+                  <p className="text-[11px] text-[#A0A0A0] uppercase tracking-wider font-semibold">AI Recommendation</p>
+                </div>
+                <p className="text-[14px] text-[#EDEDED] leading-snug">
+                  Reduce send frequency by 20% for the 'Returning Customers' segment to preserve domain reputation and engagement.
+                </p>
+              </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-2 gap-4">
-        <Card className="min-w-0 flex flex-col">
-          <CardHeader className="border-b border-[#222]">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrendingUp className="w-3.5 h-3.5 text-[#555]" />
+        <Card className="min-w-0 flex flex-col transition-colors duration-500 hover:border-white/[0.15]" onMouseEnter={() => setHoverLine(true)} onMouseLeave={() => setHoverLine(false)}>
+          <CardHeader className="border-b border-white/[0.05]">
+            <CardTitle className={`text-sm font-medium flex items-center gap-2 transition-colors duration-500 ${hoverLine ? 'text-white' : ''}`}>
+              <TrendingUp className={`w-3.5 h-3.5 transition-colors duration-500 ${hoverLine ? 'text-white' : 'text-[#555]'}`} />
               Engagement Performance
             </CardTitle>
             <CardDescription className="text-xs">Opens and Clicks across recent campaigns.</CardDescription>
@@ -94,19 +120,19 @@ export default function AnalyticsPage() {
                 <XAxis dataKey="name" stroke="#555" fontSize={11} tickLine={false} axisLine={false} dy={10} />
                 <YAxis stroke="#555" fontSize={11} tickLine={false} axisLine={false} dx={-10} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#0A0A0A', border: '1px solid #222', borderRadius: '4px', fontSize: '12px' }} 
+                  contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', fontSize: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }} 
                   itemStyle={{ color: '#EDEDED' }}
                 />
-                <Line type="monotone" dataKey="opened" stroke="#EDEDED" strokeWidth={2} dot={{ r: 3, fill: '#0A0A0A', strokeWidth: 2 }} activeDot={{ r: 5 }} />
-                <Line type="monotone" dataKey="clicked" stroke="#A0A0A0" strokeWidth={2} dot={{ r: 3, fill: '#0A0A0A', strokeWidth: 2 }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="opened" stroke={hoverLine ? '#ffffff' : '#888'} strokeWidth={2} dot={{ r: 3, fill: '#0A0A0A', strokeWidth: 2 }} activeDot={{ r: 5, fill: '#ffffff', stroke: '#000', strokeWidth: 2 }} />
+                <Line type="monotone" dataKey="clicked" stroke={hoverLine ? '#A0A0A0' : '#444'} strokeWidth={2} dot={{ r: 3, fill: '#0A0A0A', strokeWidth: 2 }} activeDot={{ r: 5, fill: '#A0A0A0', stroke: '#000', strokeWidth: 2 }} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="min-w-0 flex flex-col">
-          <CardHeader className="border-b border-[#222]">
-            <CardTitle className="text-sm font-medium">Delivery Rates</CardTitle>
+        <Card className="min-w-0 flex flex-col transition-colors duration-500 hover:border-white/[0.15]" onMouseEnter={() => setHoverBar(true)} onMouseLeave={() => setHoverBar(false)}>
+          <CardHeader className="border-b border-white/[0.05]">
+            <CardTitle className={`text-sm font-medium transition-colors duration-500 ${hoverBar ? 'text-white' : ''}`}>Delivery Rates</CardTitle>
             <CardDescription className="text-xs">Volume of delivered vs failed communications.</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 h-[300px] min-h-[300px] w-full min-w-0 pt-6">
@@ -116,16 +142,16 @@ export default function AnalyticsPage() {
                 <XAxis dataKey="name" stroke="#555" fontSize={11} tickLine={false} axisLine={false} dy={10} />
                 <YAxis stroke="#555" fontSize={11} tickLine={false} axisLine={false} dx={-10} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#0A0A0A', border: '1px solid #222', borderRadius: '4px', fontSize: '12px' }}
-                  cursor={{ fill: '#111' }}
+                  contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', fontSize: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
+                  cursor={{ fill: 'rgba(255,255,255,0.02)' }}
                 />
-                <Bar dataKey="delivered" fill="#EDEDED" radius={[2, 2, 0, 0]} barSize={16} />
-                <Bar dataKey="failed" fill="#333" radius={[2, 2, 0, 0]} barSize={16} />
+                <Bar dataKey="delivered" fill={hoverBar ? '#EDEDED' : '#555'} radius={[2, 2, 0, 0]} barSize={16} activeBar={{ fill: '#ffffff' }} />
+                <Bar dataKey="failed" fill={hoverBar ? '#555' : '#222'} radius={[2, 2, 0, 0]} barSize={16} activeBar={{ fill: '#A0A0A0' }} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
-    </div>
+    </motion.div>
   );
 }

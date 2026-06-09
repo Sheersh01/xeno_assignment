@@ -45,6 +45,7 @@ To prevent the main API thread from locking up during mass dispatches or heavy w
 - **Sentiment Analysis & Compliance Engine**: The `callback.worker.ts` now routes incoming `REPLIED` webhooks to Gemini. If the payload text is classified as an `OPT_OUT`, the user's global `dnd` flag is immediately toggled to maintain compliance.
 - **Campaign Payload Optimization**: Fixed a critical `Network Error` caused by loading massive relational trees (`campaign -> communications -> events`) for large segments. The `getCampaignById` endpoint now uses Prisma nested pagination (`take: 15` on communications) to keep the JSON payload lightning fast and prevent Node.js memory crashes.
 - **Server-Side Customer Search**: Refactored the `/customers` endpoint to accept a `?query=` parameter, utilizing Prisma's `contains` filter (case-insensitive) to search across millions of records efficiently, limiting returns to `take: 50`.
+- **Accurate Analytics Aggregation**: Replaced naive array-length counting on the frontend with a highly optimized `GET /stats` API that uses native Prisma `COUNT()` operations directly on the database level, bypassing the 50-item network payload limit and ensuring accurate global dashboard metrics.
 
 ## 📦 Setup & Installation
 
