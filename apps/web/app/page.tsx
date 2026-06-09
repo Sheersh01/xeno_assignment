@@ -11,15 +11,17 @@ import Link from "next/link";
 import { format } from "date-fns";
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState({ customers: 0, campaigns: 0, activeCampaigns: 0 });
+  const [stats, setStats] = useState({ customers: 0, orders: 0, campaigns: 0, activeCampaigns: 0 });
   const [campaigns, setCampaigns] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadData() {
       try {
         const [custData, campData] = await Promise.all([getCustomers(), getCampaigns()]);
+        const totalOrders = custData.reduce((sum: number, c: any) => sum + (c.orderCount || 0), 0);
         setStats({
           customers: custData.length,
+          orders: totalOrders,
           campaigns: campData.length,
           activeCampaigns: campData.filter((c: any) => c.status === 'RUNNING').length,
         });
@@ -66,7 +68,7 @@ export default function DashboardPage() {
             <ShoppingCart className="w-4 h-4 text-[#A1A8B3]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">~700</div>
+            <div className="text-2xl font-bold">{stats.orders.toLocaleString()}</div>
           </CardContent>
         </Card>
         <Card>

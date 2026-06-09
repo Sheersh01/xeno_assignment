@@ -42,6 +42,21 @@ export default function AnalyticsPage() {
         <Presentation className="w-6 h-6 text-[#A1A8B3]" />
       </div>
 
+      <Card className="border-[#8B5CF6]/50 bg-[#8B5CF6]/5 shadow-lg shadow-[#8B5CF6]/5 animate-in fade-in slide-in-from-bottom-4">
+        <CardContent className="pt-6 flex gap-4 items-start">
+          <div className="w-10 h-10 rounded-full bg-[#8B5CF6]/20 flex items-center justify-center shrink-0 mt-1">
+            <Sparkles className="w-5 h-5 text-[#8B5CF6]" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg text-[#F8F9FA] mb-1">Global AI Insight</h3>
+            <p className="text-[#A1A8B3] leading-relaxed">
+              Customers who opened campaigns were <strong className="text-[#F8F9FA]">3.2× more likely</strong> to click. 
+              Dormant customers responded best through <strong className="text-[#F8F9FA]">Email</strong> campaigns.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {insights.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-lg font-medium flex items-center gap-2">

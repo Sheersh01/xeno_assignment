@@ -37,6 +37,10 @@ To prevent the main API thread from locking up during mass dispatches or heavy w
 - **Redis** & **BullMQ** (Job Queues)
 - **Google Generative AI SDK**
 
+## 🛠 Recent Optimizations
+- **Campaign Payload Optimization**: Fixed a critical `Network Error` caused by loading massive relational trees (`campaign -> communications -> events`) for large segments. The `getCampaignById` endpoint now uses Prisma nested pagination (`take: 15` on communications) to keep the JSON payload lightning fast and prevent Node.js memory crashes.
+- **Server-Side Customer Search**: Refactored the `/customers` endpoint to accept a `?query=` parameter, utilizing Prisma's `contains` filter (case-insensitive) to search across millions of records efficiently, limiting returns to `take: 50`.
+
 ## 📦 Setup & Installation
 
 ```bash

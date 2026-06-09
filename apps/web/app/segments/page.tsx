@@ -81,9 +81,15 @@ export default function SegmentsPage() {
                     </CardTitle>
                     <CardDescription>{explanation || segmentData.description}</CardDescription>
                   </div>
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-[#F8F9FA]">{segmentData.audienceSize}</div>
-                    <div className="text-xs text-[#A1A8B3]">Total Customers</div>
+                  <div className="text-right flex gap-6">
+                    <div>
+                      <div className="text-3xl font-bold text-[#F8F9FA]">₹{segmentData.avgSpend?.toLocaleString() || 0}</div>
+                      <div className="text-xs text-[#A1A8B3]">Avg Spend</div>
+                    </div>
+                    <div>
+                      <div className="text-3xl font-bold text-[#F8F9FA]">{segmentData.audienceSize}</div>
+                      <div className="text-xs text-[#A1A8B3]">Total Customers</div>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
@@ -97,6 +103,15 @@ export default function SegmentsPage() {
                     {JSON.stringify(segmentData.query, null, 2)}
                   </pre>
                 </div>
+
+                {segmentData.reasoning && (
+                  <div className="mt-4 p-4 rounded-md border border-[#8B5CF6]/30 bg-[#8B5CF6]/10">
+                    <h4 className="text-sm font-semibold text-[#8B5CF6] mb-2">Why this audience?</h4>
+                    <p className="text-sm text-[#F8F9FA] leading-relaxed whitespace-pre-wrap">
+                      {segmentData.reasoning}
+                    </p>
+                  </div>
+                )}
                 
                 <div className="mt-6 flex justify-end gap-3">
                   <Button variant="outline" onClick={() => setSegmentData(null)}>Reset</Button>

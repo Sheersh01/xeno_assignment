@@ -45,13 +45,19 @@ router.post("/segment-builder", async (req, res, next) => {
       }
     }
 
-    const audienceSize = await prisma.customer.count({ where });
+    const customers = await prisma.customer.findMany({ where, select: { totalSpend: true } });
+    const audienceSize = customers.length;
+    
+    const totalSpendSum = customers.reduce((sum, c) => sum + Number(c.totalSpend), 0);
+    const avgSpend = audienceSize > 0 ? totalSpendSum / audienceSize : 0;
 
     res.json({
       segmentName: aiResponse.segmentName,
       description: aiResponse.description,
       query: aiResponse.query,
-      audienceSize
+      reasoning: aiResponse.reasoning,
+      audienceSize,
+      avgSpend: Math.round(avgSpend)
     });
   } catch (error) {
     next(error);

@@ -4,6 +4,7 @@ import {
   getCampaignById,
   getCampaigns,
   getCampaignStats,
+  deleteCampaign,
 } from "../services/campaign.service";
 import { launchCampaign } from "../services/campaign-launch.service";
 const router = Router();
@@ -12,6 +13,15 @@ router.get("/", async (_req, res, next) => {
   try {
     const campaigns = await getCampaigns();
     res.json(campaigns);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete("/:id", async (req, res, next) => {
+  try {
+    await deleteCampaign(req.params.id);
+    res.status(204).send();
   } catch (error) {
     next(error);
   }

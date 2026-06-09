@@ -5,7 +5,7 @@ const api = axios.create({
 });
 
 // Customers
-export const getCustomers = async () => (await api.get("/customers")).data;
+export const getCustomers = async (query?: string) => (await api.get("/customers", { params: { query } })).data;
 
 // Segments
 export const getSegments = async () => (await api.get("/segments")).data;
@@ -14,6 +14,7 @@ export const getSegments = async () => (await api.get("/segments")).data;
 export const getCampaigns = async () => (await api.get("/campaigns")).data;
 export const getCampaignById = async (id: string) => (await api.get(`/campaigns/${id}`)).data;
 export const createCampaign = async (data: any) => (await api.post("/campaigns", data)).data;
+export const deleteCampaign = async (id: string) => (await api.delete(`/campaigns/${id}`)).data;
 export const launchCampaign = async (id: string) => (await api.post(`/campaigns/${id}/launch`)).data;
 export const getCampaignStats = async (id: string) => (await api.get(`/campaigns/${id}/stats`)).data;
 

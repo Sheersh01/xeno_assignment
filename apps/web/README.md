@@ -26,6 +26,10 @@ We deliberately avoided standard "generic SaaS templates" or over-used Tailwind 
 - **API Client**: Axios (`lib/api.ts`)
 - **Data Visualization**: Recharts
 
+## 🛠 Recent Optimizations
+- **Debounced Search with Caching**: The `/customers` directory now utilizes a custom `useDebounce` hook to delay backend search queries by 300ms, coupled with a `Map` cache to instantly render previously searched queries without redundant network calls.
+- **Live Polling Fix**: Resolved an issue in the `/campaigns/[id]` Live Activity Feed where real-time stats would briefly reset to 0 by perfectly mapping the polling schema to the initial SSR state.
+
 ## 📦 Setup & Installation
 
 ```bash

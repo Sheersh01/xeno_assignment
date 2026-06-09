@@ -23,6 +23,9 @@ The Channel Simulator mimics the behavior of these external vendors. When the CR
 - **TypeScript**
 - **Axios** (for firing webhooks back to the CRM)
 
+## 🛠 Recent Optimizations
+- **Resilient Webhook Flow**: Verified that the simulated randomized webhook intervals (delivering `SENT`, `OPENED`, `FAILED` payloads) correctly integrate with the CRM backend's updated polling schema without desyncing Live Activity Feeds.
+
 ## 📦 Setup & Installation
 Since this is part of the larger monorepo, its dependencies are isolated.
 

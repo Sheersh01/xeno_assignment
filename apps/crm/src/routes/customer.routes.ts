@@ -7,8 +7,9 @@ import { getSegments } from "../services/customer.service";
 
 const router = Router();
 
-router.get("/", async (_, res) => {
-  const customers = await getCustomers();
+router.get("/", async (req, res) => {
+  const query = req.query.query as string | undefined;
+  const customers = await getCustomers(query);
   res.json(customers);
 });
 

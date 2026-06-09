@@ -43,9 +43,10 @@ export async function generateSegmentFilter(naturalLanguageInput: string) {
               type: SchemaType.STRING
             }
           }
-        }
+        },
+        reasoning: { type: SchemaType.STRING }
       },
-      required: ["segmentName", "description", "query"]
+      required: ["segmentName", "description", "query", "reasoning"]
     };
 
     const prompt = `You are a CRM segment builder. Convert the user's natural language input into a strict JSON query.

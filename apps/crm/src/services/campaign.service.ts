@@ -20,7 +20,16 @@ export async function getCampaignById(id: string) {
     include: {
       segment: true,
       stats: true,
-      communications: true,
+      communications: {
+        orderBy: {
+          lastEventAt: "desc"
+        },
+        take: 15,
+        include: {
+          customer: { select: { name: true, email: true } },
+          events: { orderBy: { timestamp: "desc" }, take: 1 }
+        }
+      },
     },
   });
 }
@@ -50,21 +59,48 @@ export async function getCampaignStats(id: string) {
 
   if (!stats) {
     return {
-      sent: 0,
-      delivered: 0,
-      opened: 0,
-      clicked: 0,
-      failed: 0,
-      purchased: 0,
+      sentCount: 0,
+      deliveredCount: 0,
+      openedCount: 0,
+      clickedCount: 0,
+      failedCount: 0,
+      purchasedCount: 0,
     };
   }
 
   return {
-    sent: stats.sentCount,
-    delivered: stats.deliveredCount,
-    opened: stats.openedCount,
-    clicked: stats.clickedCount,
-    failed: stats.failedCount,
-    purchased: stats.purchasedCount,
+    sentCount: stats.sentCount,
+    deliveredCount: stats.deliveredCount,
+    openedCount: stats.openedCount,
+    clickedCount: stats.clickedCount,
+    failedCount: stats.failedCount,
+    purchasedCount: stats.purchasedCount,
   };
+}
+
+export async function deleteCampaign(id: string) {
+  // Use a transaction to safely delete the campaign and its explicitly linked relations
+  return prisma.$transaction(async (tx) => {
+    // Delete communications (this cascades to events manually here if needed, or by deleting events first)
+    await tx.event.deleteMany({
+      where: { communication: { campaignId: id } },
+    });
+    
+    await tx.communication.deleteMany({
+      where: { campaignId: id },
+    });
+    
+    // stats and conversions have onDelete: Cascade in prisma schema, but we can do it explicitly just in case
+    await tx.campaignStats.deleteMany({
+      where: { campaignId: id },
+    });
+    
+    await tx.conversion.deleteMany({
+      where: { campaignId: id },
+    });
+
+    return tx.campaign.delete({
+      where: { id },
+    });
+  });
 }

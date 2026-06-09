@@ -38,9 +38,15 @@ app.post('/send', (req, res) => {
 
         setTimeout(() => {
           const isClicked = Math.random() < 0.15; // 15% of opened => CLICKED
-          
           if (isClicked) {
             fireWebhook(communicationId, 'CLICKED');
+            
+            setTimeout(() => {
+              const isPurchased = Math.random() < 0.20; // 20% of clicked => PURCHASED (order attribution)
+              if (isPurchased) {
+                fireWebhook(communicationId, 'PURCHASED');
+              }
+            }, 5000); // 5 seconds later
           }
         }, 3000); // 3 seconds later
       }

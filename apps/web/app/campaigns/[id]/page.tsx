@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
-import { getCampaignById, launchCampaign, getCampaignStats } from "@/lib/api";
+import { getCampaignById, launchCampaign, getCampaignStats, deleteCampaign } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Rocket, Activity, Send, CheckCircle2, AlertCircle, Eye, MousePointerClick, Sparkles } from "lucide-react";
+import { Rocket, Activity, Send, CheckCircle2, AlertCircle, Eye, MousePointerClick, Sparkles, ShoppingBag, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 
@@ -16,6 +16,19 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
   const [campaign, setCampaign] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
   const [launching, setLaunching] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this campaign?")) return;
+    setDeleting(true);
+    try {
+      await deleteCampaign(id);
+      router.push("/campaigns");
+    } catch (err) {
+      console.error(err);
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     async function load() {
@@ -77,11 +90,16 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
           <p className="text-sm text-[#A1A8B3]">Created {format(new Date(campaign.createdAt), 'PPpp')}</p>
         </div>
         
-        {campaign.status === 'DRAFT' && (
-          <Button onClick={handleLaunch} disabled={launching} className="bg-white text-black hover:bg-gray-200">
-            {launching ? "Launching..." : "Launch Campaign"} <Rocket className="w-4 h-4 ml-2" />
+        <div className="flex gap-2">
+          {campaign.status === 'DRAFT' && (
+            <Button onClick={handleLaunch} disabled={launching} className="bg-white text-black hover:bg-gray-200">
+              {launching ? "Launching..." : "Launch Campaign"} <Rocket className="w-4 h-4 ml-2" />
+            </Button>
+          )}
+          <Button variant="outline" className="border-[#EF4444]/50 text-[#EF4444] hover:bg-[#EF4444]/10 hover:text-[#EF4444]" onClick={handleDelete} disabled={deleting}>
+             <Trash2 className="w-4 h-4" />
           </Button>
-        )}
+        </div>
       </div>
 
       {campaign.aiInsight && (
@@ -111,6 +129,7 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
                   { label: "Delivered", val: stats?.deliveredCount || 0, icon: CheckCircle2, color: "text-[#22C55E]" },
                   { label: "Opened", val: stats?.openedCount || 0, icon: Eye, color: "text-purple-400" },
                   { label: "Clicked", val: stats?.clickedCount || 0, icon: MousePointerClick, color: "text-yellow-400" },
+                  { label: "Orders", val: stats?.purchasedCount || 0, icon: ShoppingBag, color: "text-[#8B5CF6]" },
                   { label: "Failed", val: stats?.failedCount || 0, icon: AlertCircle, color: "text-[#EF4444]" },
                 ].map((stat, i) => (
                   <div key={i} className="flex flex-col items-center justify-center p-4 bg-[#0B0D0F] rounded-lg border border-[#1E2329] relative overflow-hidden group">
@@ -165,6 +184,39 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
                   <p className="text-sm font-medium">{format(new Date(campaign.completedAt), 'PPpp')}</p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center justify-between">
+                Live Activity Feed
+                {(campaign.status === 'RUNNING' || campaign.status === 'QUEUED') && (
+                  <span className="flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-[#8B5CF6] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#8B5CF6]"></span>
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                {campaign.communications?.flatMap((c: any) => c.events?.map((e: any) => ({ ...e, customerName: c.customer?.name })))
+                  .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                  .slice(0, 15)
+                  .map((event: any, i: number) => (
+                    <div key={i} className="flex flex-col gap-1 pb-4 border-b border-[#1E2329] last:border-0 last:pb-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-[#F8F9FA]">{event.eventType}</span>
+                        <span className="text-xs text-[#A1A8B3]">{format(new Date(event.timestamp), 'h:mm a')}</span>
+                      </div>
+                      <span className="text-xs text-[#A1A8B3] truncate">to {event.customerName}</span>
+                    </div>
+                  ))}
+                  {(!campaign.communications || campaign.communications.length === 0) && (
+                    <p className="text-sm text-[#A1A8B3] text-center py-4">No activity yet.</p>
+                  )}
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -7,28 +7,41 @@ import { Input } from "@/components/ui/Input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/Dialog";
 import { format } from "date-fns";
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
+const searchCache = new Map<string, any[]>();
+
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
 
   useEffect(() => {
     async function load() {
+      if (searchCache.has(debouncedSearch)) {
+        setCustomers(searchCache.get(debouncedSearch)!);
+        return;
+      }
       try {
-        const data = await getCustomers();
+        const data = await getCustomers(debouncedSearch);
+        searchCache.set(debouncedSearch, data);
         setCustomers(data);
       } catch (err) {
         console.error(err);
       }
     }
     load();
-  }, []);
-
-  const filtered = customers.filter(c => 
-    c.name.toLowerCase().includes(search.toLowerCase()) || 
-    c.email.toLowerCase().includes(search.toLowerCase()) ||
-    c.city?.toLowerCase().includes(search.toLowerCase())
-  );
+  }, [debouncedSearch]);
 
   return (
     <div className="p-8 space-y-6">
@@ -58,7 +71,7 @@ export default function CustomersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map(c => (
+            {customers.map(c => (
               <TableRow key={c.id} onClick={() => setSelectedCustomer(c)}>
                 <TableCell className="font-medium">
                   <div>{c.name}</div>

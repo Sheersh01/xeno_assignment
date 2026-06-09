@@ -1,11 +1,20 @@
 import { prisma } from "../lib/prisma";
 
-export async function getCustomers() {
+export async function getCustomers(query?: string) {
   return prisma.customer.findMany({
-    take: 50,
+    where: query
+      ? {
+          OR: [
+            { name: { contains: query, mode: "insensitive" } },
+            { email: { contains: query, mode: "insensitive" } },
+            { city: { contains: query, mode: "insensitive" } },
+          ],
+        }
+      : undefined,
     orderBy: {
       totalSpend: "desc",
     },
+    take: 50, // Limit to top 50 to ensure fast response and prevent massive payloads
   });
 }
 
