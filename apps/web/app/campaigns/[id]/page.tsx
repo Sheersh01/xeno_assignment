@@ -79,93 +79,93 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
     }
   };
 
-  if (!campaign) return <div className="p-8 text-[#A1A8B3]">Loading...</div>;
+  if (!campaign) return <div className="p-8 text-[#A0A0A0] max-w-[1200px] mx-auto text-sm">Loading...</div>;
 
   const isABTest = Array.isArray(campaign.variants) && campaign.variants.length === 3;
   const isTestingPhase = isABTest && campaign.status === 'RUNNING' && !campaign.abTestCompleted;
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8">
-      <div className="flex items-start justify-between">
+    <div className="p-8 max-w-[1200px] mx-auto space-y-6">
+      <div className="flex items-start justify-between pb-4 border-b border-[#222]">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-2xl font-semibold tracking-tight">{campaign.name}</h1>
+            <h1 className="text-xl font-medium tracking-tight">{campaign.name}</h1>
             <Badge variant={campaign.status === 'RUNNING' ? 'success' : campaign.status === 'DRAFT' ? 'warning' : 'default'}>
               {campaign.status}
             </Badge>
             {isTestingPhase && (
-              <Badge variant="outline" className="border-yellow-500/50 text-yellow-500">
-                🟡 A/B Testing in Progress
+              <Badge variant="outline" className="border-[#F59E0B] text-[#F59E0B]">
+                A/B Testing in Progress
               </Badge>
             )}
             {campaign.abTestCompleted && (
-              <Badge variant="outline" className="border-[#22C55E]/50 text-[#22C55E]">
-                🟢 Winner Selected
+              <Badge variant="outline" className="border-[#10B981] text-[#10B981]">
+                Winner Selected
               </Badge>
             )}
           </div>
-          <p className="text-sm text-[#A1A8B3]">Created {format(new Date(campaign.createdAt), 'PPpp')}</p>
+          <p className="text-[13px] text-[#A0A0A0]">Created {format(new Date(campaign.createdAt), 'PPpp')}</p>
         </div>
         
         <div className="flex gap-2">
           {campaign.status === 'DRAFT' && (
-            <Button onClick={handleLaunch} disabled={launching} className="bg-white text-black hover:bg-gray-200">
-              {launching ? "Launching..." : "Launch Campaign"} <Rocket className="w-4 h-4 ml-2" />
+            <Button onClick={handleLaunch} disabled={launching}>
+              {launching ? "Launching..." : "Launch Campaign"} <Rocket className="w-3.5 h-3.5 ml-2" />
             </Button>
           )}
-          <Button variant="outline" className="border-[#EF4444]/50 text-[#EF4444] hover:bg-[#EF4444]/10 hover:text-[#EF4444]" onClick={handleDelete} disabled={deleting}>
-             <Trash2 className="w-4 h-4" />
+          <Button variant="outline" className="text-[#EF4444] hover:bg-[#EF4444]/10 hover:text-[#EF4444] border-[#222]" onClick={handleDelete} disabled={deleting}>
+             <Trash2 className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>
 
       {campaign.aiInsight && (
-        <Card className="border-[#8B5CF6]/50 bg-[#8B5CF6]/5 shadow-lg shadow-[#8B5CF6]/5 animate-in fade-in slide-in-from-bottom-4">
+        <Card className="border-[#222] bg-[#050505]">
           <CardContent className="pt-6 flex gap-4 items-start">
-            <div className="w-10 h-10 rounded-full bg-[#8B5CF6]/20 flex items-center justify-center shrink-0 mt-1">
-              <Sparkles className="w-5 h-5 text-[#8B5CF6]" />
+            <div className="w-8 h-8 rounded border border-[#333] bg-[#111] flex items-center justify-center shrink-0 mt-0.5">
+              <Sparkles className="w-4 h-4 text-[#EDEDED]" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg text-[#F8F9FA] mb-1">AI Executive Summary</h3>
-              <p className="text-[#A1A8B3] leading-relaxed">{campaign.aiInsight}</p>
+              <h3 className="font-medium text-[15px] text-[#EDEDED] mb-1">Executive Summary</h3>
+              <p className="text-[#A0A0A0] text-[13px] leading-relaxed">{campaign.aiInsight}</p>
             </div>
           </CardContent>
         </Card>
       )}
 
       {isTestingPhase && stats?.variantStats && (
-        <Card className="border-yellow-500/50">
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Activity className="w-4 h-4 text-yellow-500" />
+        <Card className="border-[#F59E0B]/30 bg-[#F59E0B]/5">
+          <CardHeader className="border-b border-[#F59E0B]/20">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-[#FBBF24]">
+              <Activity className="w-4 h-4" />
               Live A/B Testing Performance
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs text-[#FBBF24]/70">
               Evaluating {campaign.abTestSampleSize} users. Auto-optimization in progress...
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="grid grid-cols-3 gap-4">
               {stats.variantStats.map((vStat: any, i: number) => {
                 const openRate = vStat.sent > 0 ? Math.round((vStat.opened / vStat.sent) * 100) : 0;
                 const clickRate = vStat.opened > 0 ? Math.round((vStat.clicked / vStat.opened) * 100) : 0;
                 return (
-                  <div key={i} className="p-4 bg-[#0B0D0F] rounded-lg border border-[#1E2329]">
+                  <div key={i} className="p-4 bg-[#0A0A0A] rounded border border-[#222]">
                     <div className="flex justify-between items-center mb-4">
-                      <span className="font-semibold">Variant {String.fromCharCode(65 + i)}</span>
-                      <Badge variant="outline" className="text-[#8B5CF6] border-[#8B5CF6]/50">Score: {vStat.score}</Badge>
+                      <span className="text-[13px] font-medium">Variant {String.fromCharCode(65 + i)}</span>
+                      <Badge variant="outline" className="text-[#A0A0A0] border-[#333]">Score: {vStat.score}</Badge>
                     </div>
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-2 text-[13px]">
                       <div className="flex justify-between">
-                        <span className="text-[#A1A8B3]">Sent</span>
+                        <span className="text-[#A0A0A0]">Sent</span>
                         <span>{vStat.sent}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-[#A1A8B3]">Open Rate</span>
+                        <span className="text-[#A0A0A0]">Open Rate</span>
                         <span>{openRate}%</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-[#A1A8B3]">Click Rate</span>
+                        <span className="text-[#A0A0A0]">Click Rate</span>
                         <span>{clickRate}%</span>
                       </div>
                     </div>
@@ -178,16 +178,16 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
       )}
 
       {campaign.abTestCompleted && typeof campaign.winnerIndex === 'number' && (
-        <Card className="border-[#22C55E]/50 bg-[#22C55E]/5">
+        <Card className="border-[#10B981]/30 bg-[#10B981]/5">
           <CardContent className="pt-6 flex gap-4 items-start">
-            <div className="w-10 h-10 rounded-full bg-[#22C55E]/20 flex items-center justify-center shrink-0 mt-1">
-              <Trophy className="w-5 h-5 text-[#22C55E]" />
+            <div className="w-8 h-8 rounded border border-[#10B981]/30 bg-[#052E16] flex items-center justify-center shrink-0 mt-0.5">
+              <Trophy className="w-4 h-4 text-[#34D399]" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg text-[#F8F9FA] mb-1">
+              <h3 className="font-medium text-[15px] text-[#34D399] mb-1">
                 Winner: Variant {String.fromCharCode(65 + campaign.winnerIndex)}
               </h3>
-              <p className="text-[#A1A8B3] leading-relaxed text-sm">
+              <p className="text-[#A0A0A0] text-[13px] leading-relaxed">
                 The remaining {campaign.segment?.audienceSize - campaign.abTestSampleSize} customers are receiving this variant.
               </p>
             </div>
@@ -195,29 +195,26 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
         </Card>
       )}
 
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-4">
           <Card>
-            <CardHeader className="border-b border-[#1E2329] bg-[#1E2329]/20">
-              <CardTitle className="text-sm">Live Delivery Pipeline</CardTitle>
+            <CardHeader className="border-b border-[#222]">
+              <CardTitle className="text-sm font-medium">Live Delivery Pipeline</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
-              <div className="grid grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 {[
-                  { label: "Sent", val: stats?.sentCount || 0, icon: Send, color: "text-blue-400" },
-                  { label: "Delivered", val: stats?.deliveredCount || 0, icon: CheckCircle2, color: "text-[#22C55E]" },
-                  { label: "Opened", val: stats?.openedCount || 0, icon: Eye, color: "text-purple-400" },
-                  { label: "Clicked", val: stats?.clickedCount || 0, icon: MousePointerClick, color: "text-yellow-400" },
-                  { label: "Orders", val: stats?.purchasedCount || 0, icon: ShoppingBag, color: "text-[#8B5CF6]" },
-                  { label: "Failed", val: stats?.failedCount || 0, icon: AlertCircle, color: "text-[#EF4444]" },
+                  { label: "Sent", val: stats?.sentCount || 0, icon: Send },
+                  { label: "Delivered", val: stats?.deliveredCount || 0, icon: CheckCircle2 },
+                  { label: "Opened", val: stats?.openedCount || 0, icon: Eye },
+                  { label: "Clicked", val: stats?.clickedCount || 0, icon: MousePointerClick },
+                  { label: "Orders", val: stats?.purchasedCount || 0, icon: ShoppingBag },
+                  { label: "Failed", val: stats?.failedCount || 0, icon: AlertCircle },
                 ].map((stat, i) => (
-                  <div key={i} className="flex flex-col items-center justify-center p-4 bg-[#0B0D0F] rounded-lg border border-[#1E2329] relative overflow-hidden group">
-                    {(campaign.status === 'RUNNING' || campaign.status === 'QUEUED') && (
-                      <div className="absolute top-0 left-0 w-full h-0.5 bg-[#8B5CF6] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    )}
-                    <stat.icon className={`w-6 h-6 mb-3 ${stat.color}`} />
-                    <span className="text-2xl font-bold mb-1">{stat.val}</span>
-                    <span className="text-xs text-[#A1A8B3] font-medium uppercase tracking-wider">{stat.label}</span>
+                  <div key={i} className="flex flex-col items-center justify-center p-3 bg-[#000] rounded border border-[#222] relative overflow-hidden group">
+                    <stat.icon className="w-5 h-5 mb-2 text-[#555] group-hover:text-[#EDEDED] transition-colors" />
+                    <span className="text-xl font-medium mb-1">{stat.val}</span>
+                    <span className="text-[10px] text-[#A0A0A0] uppercase tracking-wider font-semibold">{stat.label}</span>
                   </div>
                 ))}
               </div>
@@ -225,22 +222,22 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Message Content</CardTitle>
+            <CardHeader className="border-b border-[#222]">
+              <CardTitle className="text-sm font-medium">Message Content</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-6">
               {isABTest ? (
                 campaign.variants.map((v: any, idx: number) => (
-                  <div key={idx} className={`p-4 rounded-lg border font-mono text-sm leading-relaxed ${campaign.winnerIndex === idx ? 'bg-[#22C55E]/10 border-[#22C55E]' : 'bg-[#0B0D0F] border-[#1E2329]'}`}>
-                    <p className="text-xs text-[#A1A8B3] font-sans mb-2 font-semibold">
+                  <div key={idx} className={`p-4 rounded border font-mono text-[13px] leading-relaxed ${campaign.winnerIndex === idx ? 'bg-[#052E16]/30 border-[#065F46]' : 'bg-[#000] border-[#222]'}`}>
+                    <p className="text-[11px] text-[#A0A0A0] font-sans mb-2 font-semibold uppercase tracking-wider">
                       Variant {String.fromCharCode(65 + idx)} {campaign.winnerIndex === idx && "(WINNER)"}
                     </p>
-                    <p className="font-bold border-b border-[#1E2329] pb-2 mb-2 text-[#F8F9FA]">{v.subject}</p>
+                    <p className="font-medium border-b border-[#222] pb-2 mb-2 text-[#EDEDED]">{v.subject}</p>
                     <p className="whitespace-pre-wrap">{v.message}</p>
                   </div>
                 ))
               ) : (
-                <div className="p-4 bg-[#0B0D0F] rounded-lg border border-[#1E2329] font-mono text-sm leading-relaxed">
+                <div className="p-4 bg-[#000] rounded border border-[#222] font-mono text-[13px] leading-relaxed">
                   <p className="whitespace-pre-wrap">{campaign.message}</p>
                 </div>
               )}
@@ -248,71 +245,71 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Configuration</CardTitle>
+            <CardHeader className="border-b border-[#222]">
+              <CardTitle className="text-sm font-medium">Configuration</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-6">
               <div>
-                <p className="text-xs text-[#A1A8B3] mb-1">Target Segment</p>
-                <div className="p-3 bg-[#0B0D0F] rounded-md border border-[#1E2329]">
-                  <p className="font-medium text-sm">{campaign.segment?.name || 'Unknown'}</p>
-                  <p className="text-xs text-[#A1A8B3] mt-1 line-clamp-2">{campaign.segment?.description}</p>
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-[#A0A0A0] mb-1.5">Target Segment</p>
+                <div className="p-3 bg-[#000] rounded border border-[#222]">
+                  <p className="font-medium text-[13px]">{campaign.segment?.name || 'Unknown'}</p>
+                  <p className="text-[12px] text-[#A0A0A0] mt-1 line-clamp-2">{campaign.segment?.description}</p>
                 </div>
               </div>
               
               <div>
-                <p className="text-xs text-[#A1A8B3] mb-1">Delivery Channel</p>
-                <Badge variant="outline" className="text-sm py-1 px-3 w-full justify-center">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-[#A0A0A0] mb-1.5">Delivery Channel</p>
+                <Badge variant="outline" className="w-full justify-center">
                   {campaign.channel}
                 </Badge>
               </div>
 
               {campaign.completedAt && (
                 <div>
-                  <p className="text-xs text-[#A1A8B3] mb-1">Completed At</p>
-                  <p className="text-sm font-medium">{format(new Date(campaign.completedAt), 'PPpp')}</p>
+                  <p className="text-[10px] uppercase tracking-wider font-semibold text-[#A0A0A0] mb-1.5">Completed At</p>
+                  <p className="text-[13px]">{format(new Date(campaign.completedAt), 'PPpp')}</p>
                 </div>
               )}
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center justify-between">
+            <CardHeader className="border-b border-[#222]">
+              <CardTitle className="text-sm font-medium flex items-center justify-between">
                 Live Activity Feed
                 {(campaign.status === 'RUNNING' || campaign.status === 'QUEUED') && (
-                  <span className="flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-[#8B5CF6] opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#8B5CF6]"></span>
+                  <span className="flex h-2 w-2 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
                   </span>
                 )}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                 {campaign.communications?.flatMap((c: any) => c.events?.map((e: any) => ({ ...e, customerName: c.customer?.name, dndReason: e.metadata?.replyText })))
                   .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
                   .slice(0, 15)
                   .map((event: any, i: number) => (
-                    <div key={i} className="flex flex-col gap-1 pb-4 border-b border-[#1E2329] last:border-0 last:pb-0">
+                    <div key={i} className="flex flex-col gap-1 pb-3 border-b border-[#222] last:border-0 last:pb-0">
                       <div className="flex items-center justify-between">
-                        <span className={`text-xs font-medium ${event.eventType === 'REPLIED' ? 'text-[#8B5CF6]' : 'text-[#F8F9FA]'}`}>
+                        <span className={`text-[12px] font-semibold tracking-wider uppercase ${event.eventType === 'REPLIED' ? 'text-[#EDEDED]' : 'text-[#A0A0A0]'}`}>
                           {event.eventType}
                         </span>
-                        <span className="text-xs text-[#A1A8B3]">{format(new Date(event.timestamp), 'h:mm a')}</span>
+                        <span className="text-[11px] text-[#777]">{format(new Date(event.timestamp), 'h:mm a')}</span>
                       </div>
-                      <span className="text-xs text-[#A1A8B3] truncate">to {event.customerName}</span>
+                      <span className="text-[12px] text-[#A0A0A0] truncate">to {event.customerName}</span>
                       {event.eventType === 'REPLIED' && event.dndReason && (
-                        <span className="text-xs text-[#A1A8B3] bg-[#8B5CF6]/10 p-1 rounded italic mt-1 truncate">
+                        <span className="text-[12px] text-[#A0A0A0] bg-[#111] p-1.5 rounded border border-[#222] mt-1 truncate">
                           "{event.dndReason}"
                         </span>
                       )}
                     </div>
                   ))}
                   {(!campaign.communications || campaign.communications.length === 0) && (
-                    <p className="text-sm text-[#A1A8B3] text-center py-4">No activity yet.</p>
+                    <p className="text-[13px] text-[#555] text-center py-4">No activity yet.</p>
                   )}
               </div>
             </CardContent>

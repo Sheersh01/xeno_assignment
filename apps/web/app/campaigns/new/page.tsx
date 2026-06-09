@@ -89,101 +89,103 @@ export default function NewCampaignPage() {
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Create Campaign</h1>
-        <p className="text-sm text-[#A1A8B3]">AI-assisted autonomous A/B testing campaign wizard.</p>
+    <div className="p-8 max-w-[800px] mx-auto space-y-8">
+      <div className="pb-4 border-b border-[#222]">
+        <h1 className="text-xl font-medium tracking-tight">Create Campaign</h1>
+        <p className="text-sm text-[#A0A0A0] mt-1">AI-assisted autonomous A/B testing campaign wizard.</p>
       </div>
 
-      <div className="flex items-center gap-2 mb-8 text-sm font-medium">
+      <div className="flex items-center gap-2 mb-8">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="flex items-center gap-2">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step >= i ? 'bg-[#8B5CF6] text-white' : 'bg-[#1E2329] text-[#A1A8B3]'}`}>
+            <div className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold ${step >= i ? 'bg-[#EDEDED] text-[#000]' : 'bg-[#111] text-[#555] border border-[#222]'}`}>
               {step > i ? <Check className="w-3 h-3" /> : i}
             </div>
-            {i < 4 && <div className={`w-8 h-[2px] ${step > i ? 'bg-[#8B5CF6]' : 'bg-[#1E2329]'}`} />}
+            {i < 4 && <div className={`w-8 h-[1px] ${step > i ? 'bg-[#555]' : 'bg-[#222]'}`} />}
           </div>
         ))}
       </div>
 
       {step === 1 && (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h2 className="text-lg font-medium">Select Audience Segment</h2>
+        <div className="space-y-4">
+          <h2 className="text-sm font-medium">Select Audience Segment</h2>
           <div className="grid grid-cols-2 gap-4">
             {segments.map((s) => (
               <Card 
                 key={s.id} 
-                className={`cursor-pointer transition-colors hover:border-[#8B5CF6]/50 ${segmentId === s.id ? 'border-[#8B5CF6] ring-1 ring-[#8B5CF6]' : ''}`}
+                className={`cursor-pointer transition-colors hover:border-[#555] ${segmentId === s.id ? 'border-[#EDEDED] ring-1 ring-[#EDEDED]' : ''}`}
                 onClick={() => setSegment(s.id, s.name, s.description || "Segment")}
               >
-                <CardHeader>
-                  <CardTitle className="text-base">{s.name}</CardTitle>
-                  <CardDescription className="line-clamp-2">{s.description}</CardDescription>
+                <CardHeader className="border-b border-[#222] pb-3">
+                  <CardTitle className="text-[13px]">{s.name}</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-4">
+                  <CardDescription className="line-clamp-2 text-[12px] mb-4">{s.description}</CardDescription>
                   <Badge variant="outline">{s.audienceSize} Customers</Badge>
                 </CardContent>
               </Card>
             ))}
           </div>
           <div className="flex justify-end mt-6">
-            <Button disabled={!segmentId} onClick={() => setStep(2)}>Next <ArrowRight className="w-4 h-4 ml-2" /></Button>
+            <Button disabled={!segmentId} onClick={() => setStep(2)}>Next <ArrowRight className="w-3.5 h-3.5 ml-2" /></Button>
           </div>
         </div>
       )}
 
       {step === 2 && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h2 className="text-lg font-medium">Generate A/B Test Variants</h2>
+        <div className="space-y-6">
+          <h2 className="text-sm font-medium">Generate A/B Test Variants</h2>
           <Card>
-            <CardContent className="pt-6 space-y-4">
+            <CardContent className="pt-6 space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#A1A8B3]">Campaign Goal</label>
+                <label className="text-[11px] uppercase tracking-wider font-semibold text-[#A0A0A0]">Campaign Goal</label>
                 <Input 
                   placeholder="e.g. Win back customers with a 20% discount" 
                   value={goal}
                   onChange={(e) => setGoal(e.target.value)}
+                  className="bg-[#000]"
                 />
               </div>
-              <div className="p-4 bg-[#1E2329]/30 rounded-md border border-[#1E2329]">
-                <p className="text-xs text-[#A1A8B3] uppercase font-semibold mb-1">Targeting</p>
-                <p className="text-sm font-medium">{segmentName}</p>
-                <p className="text-xs text-[#A1A8B3] mt-1">{segmentDescription}</p>
+              <div className="p-4 bg-[#000] rounded border border-[#222]">
+                <p className="text-[10px] text-[#A0A0A0] uppercase font-semibold mb-2 tracking-wider">Targeting</p>
+                <p className="text-[13px] font-medium">{segmentName}</p>
+                <p className="text-[12px] text-[#A0A0A0] mt-1">{segmentDescription}</p>
               </div>
             </CardContent>
           </Card>
           <div className="flex justify-between mt-6">
-            <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
-            <Button onClick={handleGenerateMessage} disabled={!goal || loading} className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white">
-              {loading ? "Generating 3 Variants..." : "Generate 3 Variants"} <Sparkles className="w-4 h-4 ml-2" />
+            <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="w-3.5 h-3.5 mr-2" /> Back</Button>
+            <Button onClick={handleGenerateMessage} disabled={!goal || loading}>
+              {loading ? "Generating Variants..." : "Generate 3 Variants"} <Sparkles className="w-3.5 h-3.5 ml-2" />
             </Button>
           </div>
         </div>
       )}
 
       {step === 3 && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h2 className="text-lg font-medium">Review Variants & Select Channel</h2>
+        <div className="space-y-6">
+          <h2 className="text-sm font-medium">Review Variants & Select Channel</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {variants.map((variant, idx) => (
               <Card key={idx}>
-                <CardHeader>
-                  <CardTitle className="text-base text-[#A1A8B3]">Variant {String.fromCharCode(65 + idx)}</CardTitle>
+                <CardHeader className="border-b border-[#222]">
+                  <CardTitle className="text-[12px] font-semibold uppercase tracking-wider text-[#A0A0A0]">Variant {String.fromCharCode(65 + idx)}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-[#A1A8B3]">Subject</label>
+                    <label className="text-[11px] uppercase tracking-wider font-semibold text-[#A0A0A0]">Subject</label>
                     <Input 
                       value={variant.subject} 
                       onChange={(e) => handleVariantChange(idx, 'subject', e.target.value)} 
+                      className="bg-[#000] text-[13px]"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-[#A1A8B3]">Message</label>
+                    <label className="text-[11px] uppercase tracking-wider font-semibold text-[#A0A0A0]">Message</label>
                     <Textarea 
                       value={variant.message} 
                       onChange={(e) => handleVariantChange(idx, 'message', e.target.value)} 
-                      className="h-32 text-sm" 
+                      className="h-32 text-[13px] bg-[#000]" 
                     />
                   </div>
                 </CardContent>
@@ -192,77 +194,77 @@ export default function NewCampaignPage() {
           </div>
 
           <div className="flex justify-between mt-6">
-            <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
-            <Button onClick={handleGetRecommendation} disabled={variants.length === 0 || loading} className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white">
-              {loading ? "Analyzing..." : "Get Channel Recommendation"} <Sparkles className="w-4 h-4 ml-2" />
+            <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="w-3.5 h-3.5 mr-2" /> Back</Button>
+            <Button onClick={handleGetRecommendation} disabled={variants.length === 0 || loading}>
+              {loading ? "Analyzing..." : "Get Channel Recommendation"} <Sparkles className="w-3.5 h-3.5 ml-2" />
             </Button>
           </div>
         </div>
       )}
 
       {step === 4 && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h2 className="text-lg font-medium">Final Preview</h2>
+        <div className="space-y-6">
+          <h2 className="text-sm font-medium">Final Preview</h2>
           
           {recommendation && (
-            <Card className="border-[#8B5CF6]/50 bg-[#8B5CF6]/5">
-              <CardContent className="pt-6 flex gap-4 items-start">
-                <div className="w-10 h-10 rounded-full bg-[#8B5CF6]/20 flex items-center justify-center shrink-0">
-                  <Sparkles className="w-5 h-5 text-[#8B5CF6]" />
+            <Card className="border-[#222] bg-[#050505]">
+              <CardContent className="pt-5 flex gap-4 items-start">
+                <div className="w-8 h-8 rounded border border-[#333] bg-[#111] flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4 text-[#EDEDED]" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <h3 className="font-medium text-[14px] flex items-center gap-2">
                     AI Recommends: {recommendation.recommendedChannel}
                   </h3>
-                  <p className="text-sm text-[#A1A8B3] mt-1">{recommendation.reason}</p>
+                  <p className="text-[13px] text-[#A0A0A0] mt-1">{recommendation.reason}</p>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-4">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-sm text-[#A1A8B3]">Configuration</CardTitle>
+              <CardHeader className="border-b border-[#222]">
+                <CardTitle className="text-[12px] uppercase tracking-wider font-semibold text-[#A0A0A0]">Configuration</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 pt-4">
                 <div>
-                  <p className="text-xs text-[#A1A8B3] mb-1">Audience</p>
-                  <p className="font-medium">{segmentName}</p>
+                  <p className="text-[10px] text-[#A0A0A0] uppercase font-semibold tracking-wider mb-1">Audience</p>
+                  <p className="font-medium text-[13px]">{segmentName}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#A1A8B3] mb-1">Channel</p>
+                  <p className="text-[10px] text-[#A0A0A0] uppercase font-semibold tracking-wider mb-1">Channel</p>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-base py-1 px-3">
-                      {channel === 'EMAIL' ? <Mail className="w-4 h-4 mr-2" /> : channel === 'WHATSAPP' ? <MessageSquare className="w-4 h-4 mr-2" /> : <Smartphone className="w-4 h-4 mr-2" />}
+                    <Badge variant="outline" className="py-1 px-3">
+                      {channel === 'EMAIL' ? <Mail className="w-3.5 h-3.5 mr-2" /> : channel === 'WHATSAPP' ? <MessageSquare className="w-3.5 h-3.5 mr-2" /> : <Smartphone className="w-3.5 h-3.5 mr-2" />}
                       {channel}
                     </Badge>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-[#A1A8B3] mb-1">Testing Mode</p>
-                  <Badge variant="outline" className="text-[#8B5CF6] border-[#8B5CF6]/50">Autonomous A/B Testing</Badge>
+                  <p className="text-[10px] text-[#A0A0A0] uppercase font-semibold tracking-wider mb-1">Testing Mode</p>
+                  <Badge variant="outline">Autonomous A/B Testing</Badge>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-sm text-[#A1A8B3]">Selected Variants</CardTitle>
+              <CardHeader className="border-b border-[#222]">
+                <CardTitle className="text-[12px] uppercase tracking-wider font-semibold text-[#A0A0A0]">Selected Variants</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="p-4 bg-[#0B0D0F] rounded-lg border border-[#1E2329]">
-                  <p className="font-semibold text-sm border-b border-[#1E2329] pb-2 mb-2">3 AI Variants generated</p>
-                  <p className="text-sm text-[#A1A8B3]">15% of the audience will be split among the variants. The highest performing variant will automatically be sent to the remaining 85%.</p>
+              <CardContent className="pt-4">
+                <div className="p-4 bg-[#000] rounded border border-[#222]">
+                  <p className="font-medium text-[13px] border-b border-[#222] pb-2 mb-2">3 AI Variants generated</p>
+                  <p className="text-[12px] text-[#A0A0A0]">15% of the audience will be split among the variants. The highest performing variant will automatically be sent to the remaining 85%.</p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
           <div className="flex justify-between mt-6">
-            <Button variant="outline" onClick={() => setStep(3)}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
-            <Button onClick={handleCreate} disabled={loading} className="bg-white text-black hover:bg-gray-200">
-              {loading ? "Creating..." : "Launch Experiment"} <Send className="w-4 h-4 ml-2" />
+            <Button variant="outline" onClick={() => setStep(3)}><ArrowLeft className="w-3.5 h-3.5 mr-2" /> Back</Button>
+            <Button onClick={handleCreate} disabled={loading}>
+              {loading ? "Creating..." : "Launch Experiment"} <Send className="w-3.5 h-3.5 ml-2" />
             </Button>
           </div>
         </div>
