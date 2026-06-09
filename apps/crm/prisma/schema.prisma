@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CampaignStatus {
+  DRAFT
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum CommunicationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  PURCHASED
+  FAILED
+}
+
+enum ChannelType {
+  WHATSAPP
+  EMAIL
+  SMS
+  RCS
+}
+
+enum EventType {
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  PURCHASED
+  FAILED
+}
+
+model Customer {
+  id String @id @default(cuid())
+
+  name  String
+  email String  @unique
+phone String @unique
+  city  String?
+
+  totalSpend    Decimal @default(0)
+  orderCount    Int     @default(0)
+  avgOrderValue Decimal @default(0)
+
+  lastOrderDate DateTime?
+
+  createdAt DateTime @default(now())
+
+  orders         Order[]
+  communications Communication[]
+  conversions    Conversion[]
+}
+
+model Order {
+  id String @id @default(cuid())
+
+  customerId String
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  amount Decimal
+
+  category String
+
+  productTags Json?
+
+  channel String?
+
+  createdAt DateTime @default(now())
+
+  conversions Conversion[]
+
+  @@index([customerId])
+}
+
+model Segment {
+  id String @id @default(cuid())
+
+  name String
+
+  description String?
+
+  naturalLanguageInput String
+
+  query Json
+
+  audienceSize Int
+
+  createdAt DateTime @default(now())
+
+  campaigns Campaign[]
+}
+
+model Campaign {
+  id String @id @default(cuid())
+
+  name String
+
+  segmentId String
+
+  segment Segment @relation(fields: [segmentId], references: [id])
+
+  message String
+
+  channel ChannelType
+
+  aiRecommendedChannel ChannelType?
+
+  status CampaignStatus @default(DRAFT)
+
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  communications Communication[]
+
+  stats CampaignStats?
+
+  conversions Conversion[]
+
+  aiInsight String?
+}
+
+model Communication {
+  id String @id @default(cuid())
+
+  campaignId String
+
+  customerId String
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  status CommunicationStatus @default(PENDING)
+
+  channel String
+
+  retryCount Int @default(0)
+
+  lastAttemptAt DateTime?
+
+  lastEventAt DateTime?
+
+  events Event[]
+
+  @@index([campaignId])
+  @@index([customerId])
+}
+
+model Event {
+  id String @id @default(cuid())
+
+  communicationId String
+
+  communication Communication @relation(fields: [communicationId], references: [id])
+
+  eventType EventType
+
+  metadata Json?
+
+  timestamp DateTime @default(now())
+
+  @@index([communicationId])
+}
+
+model CampaignStats {
+  campaignId String @id
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  sentCount      Int @default(0)
+  deliveredCount Int @default(0)
+  openedCount    Int @default(0)
+  clickedCount   Int @default(0)
+  purchasedCount Int @default(0)
+  failedCount    Int @default(0)
+
+  updatedAt DateTime @updatedAt
+}
+
+model Conversion {
+  id String @id @default(cuid())
+
+  campaignId String
+  customerId String
+  orderId    String
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  attributedAt DateTime @default(now())
+
+  @@index([campaignId])
+  @@index([customerId])
+  @@index([orderId])
+}
