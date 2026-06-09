@@ -39,6 +39,7 @@ export async function createCampaign(data: {
   segmentId: string;
   message: string;
   channel: "WHATSAPP" | "EMAIL" | "SMS" | "RCS";
+  variants?: any[];
 }) {
   return prisma.campaign.create({
     data: {
@@ -46,6 +47,7 @@ export async function createCampaign(data: {
       segmentId: data.segmentId,
       message: data.message,
       channel: data.channel,
+      variants: data.variants || undefined,
     },
   });
 }
@@ -57,6 +59,42 @@ export async function getCampaignStats(id: string) {
     },
   });
 
+  // Calculate variant-specific stats if A/B testing
+  const testComms = await prisma.communication.findMany({
+    where: {
+      campaignId: id,
+      variantIndex: { not: null }
+    },
+    include: { events: true }
+  });
+
+  const variantStats = [
+    { variantIndex: 0, opened: 0, clicked: 0, purchased: 0, score: 0, sent: 0 },
+    { variantIndex: 1, opened: 0, clicked: 0, purchased: 0, score: 0, sent: 0 },
+    { variantIndex: 2, opened: 0, clicked: 0, purchased: 0, score: 0, sent: 0 },
+  ];
+
+  testComms.forEach(comm => {
+    const vIdx = comm.variantIndex as number;
+    if (vIdx >= 0 && vIdx <= 2) {
+      variantStats[vIdx].sent++;
+      comm.events.forEach(event => {
+        if (event.eventType === 'OPENED') {
+          variantStats[vIdx].opened++;
+          variantStats[vIdx].score += 2;
+        }
+        if (event.eventType === 'CLICKED') {
+          variantStats[vIdx].clicked++;
+          variantStats[vIdx].score += 5;
+        }
+        if (event.eventType === 'PURCHASED') {
+          variantStats[vIdx].purchased++;
+          variantStats[vIdx].score += 10;
+        }
+      });
+    }
+  });
+
   if (!stats) {
     return {
       sentCount: 0,
@@ -65,6 +103,7 @@ export async function getCampaignStats(id: string) {
       clickedCount: 0,
       failedCount: 0,
       purchasedCount: 0,
+      variantStats
     };
   }
 
@@ -75,6 +114,7 @@ export async function getCampaignStats(id: string) {
     clickedCount: stats.clickedCount,
     failedCount: stats.failedCount,
     purchasedCount: stats.purchasedCount,
+    variantStats
   };
 }
 

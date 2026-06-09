@@ -30,6 +30,23 @@ app.post('/send', (req, res) => {
     // 95% DELIVERED
     fireWebhook(communicationId, 'DELIVERED');
 
+    // Chance to reply directly after delivered
+    setTimeout(() => {
+      const isReplied = Math.random() < 0.10; // 10% chance to reply
+      if (isReplied) {
+        const mockReplies = [
+          "Stop texting me",
+          "Unsubscribe me",
+          "Looks great",
+          "Tell me more",
+          "Is this available in blue?",
+          "No thanks"
+        ];
+        const randomReply = mockReplies[Math.floor(Math.random() * mockReplies.length)];
+        fireWebhook(communicationId, 'REPLIED', { replyText: randomReply });
+      }
+    }, 1500);
+
     setTimeout(() => {
       const isOpened = Math.random() < 0.40; // 40% of delivered => OPENED
       
@@ -54,9 +71,9 @@ app.post('/send', (req, res) => {
   }, 1000); // 1 second later
 });
 
-async function fireWebhook(communicationId: string, eventType: string) {
+async function fireWebhook(communicationId: string, eventType: string, metadata?: any) {
   try {
-    await axios.post(CRM_WEBHOOK_URL, { communicationId, eventType });
+    await axios.post(CRM_WEBHOOK_URL, { communicationId, eventType, metadata });
     console.log(`[Simulator] Fired webhook: ${eventType} for comm ${communicationId}`);
   } catch (error) {
     console.error(`[Simulator] Failed to fire webhook for comm ${communicationId}:`, error.message);

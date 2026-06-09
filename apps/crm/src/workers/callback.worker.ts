@@ -3,11 +3,29 @@ import { EventType, CommunicationStatus } from "@prisma/client";
 import { connection } from "../config/redis";
 import { callbackQueueName } from "../queues";
 import { prisma } from "../lib/prisma";
+import { analyzeSentiment } from "../services/ai.service";
 
 export const callbackWorker = new Worker(
   callbackQueueName,
   async (job) => {
-    const { communicationId, eventType } = job.data;
+    const { communicationId, eventType, metadata } = job.data;
+
+    let sentimentMetadata = metadata;
+
+    if (eventType === 'REPLIED' && metadata?.replyText) {
+      const sentiment = await analyzeSentiment(metadata.replyText);
+      sentimentMetadata = { ...metadata, sentiment };
+      
+      if (sentiment === 'OPT_OUT') {
+        const comm = await prisma.communication.findUnique({ where: { id: communicationId }});
+        if (comm) {
+          await prisma.customer.update({
+            where: { id: comm.customerId },
+            data: { dnd: true, dndReason: metadata.replyText }
+          });
+        }
+      }
+    }
 
     await prisma.$transaction(async (tx) => {
       // 1. Create Event row
@@ -15,6 +33,7 @@ export const callbackWorker = new Worker(
         data: {
           communicationId,
           eventType: eventType as EventType,
+          metadata: sentimentMetadata
         },
       });
 

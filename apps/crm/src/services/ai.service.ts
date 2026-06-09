@@ -78,18 +78,30 @@ export async function generateCampaignMessage(campaignGoal: string, segmentDescr
   try {
     if (!apiKey) throw new Error("No API key");
 
-    const prompt = `You are an expert marketer. Generate a concise marketing message based on the goal and audience.
+    const prompt = `You are an expert marketer. Generate 3 DISTINCT variations of a marketing message based on the goal and audience. 
+Make Variant A focused on Urgency/FOMO.
+Make Variant B focused on Value/Benefit.
+Make Variant C Casual/Friendly.
 Goal: ${campaignGoal}
 Audience: ${segmentDescription}
-Return a JSON object with "subject" and "message". The message should be plain text, engaging, and under 250 characters.`;
+Return a JSON object with an array "variants" containing exactly 3 objects, each with "subject" and "message". The message should be plain text, engaging, and under 250 characters.`;
 
     const responseSchema = {
       type: SchemaType.OBJECT,
       properties: {
-        subject: { type: SchemaType.STRING },
-        message: { type: SchemaType.STRING }
+        variants: {
+          type: SchemaType.ARRAY,
+          items: {
+            type: SchemaType.OBJECT,
+            properties: {
+              subject: { type: SchemaType.STRING },
+              message: { type: SchemaType.STRING }
+            },
+            required: ["subject", "message"]
+          }
+        }
       },
-      required: ["subject", "message"]
+      required: ["variants"]
     };
 
     const result = await model.generateContent({
@@ -100,13 +112,91 @@ Return a JSON object with "subject" and "message". The message should be plain t
       }
     });
 
-    return JSON.parse(result.response.text());
+    const parsed = JSON.parse(result.response.text());
+    // Ensure we always return exactly 3
+    if (parsed.variants && parsed.variants.length >= 3) {
+      return parsed.variants.slice(0, 3);
+    }
+    throw new Error("Invalid variants array returned from AI");
   } catch (error) {
     console.error("AI Error (generateCampaignMessage):", error.message);
-    return {
-      subject: "Special Offer Inside",
-      message: "Check out our latest offers tailored just for you!"
+    return [
+      { subject: "Flash Sale Ends Soon!", message: "Hurry, check out our latest offers tailored just for you before they're gone!" },
+      { subject: "Unlock Your Exclusive Value", message: "Discover premium benefits and savings waiting for you inside." },
+      { subject: "Hey there! Just checking in", message: "We thought you might like to see what's new in store for you." }
+    ];
+  }
+}
+
+export async function analyzeSentiment(replyText: string) {
+  try {
+    if (!apiKey) throw new Error("No API key");
+
+    const prompt = `You are a customer sentiment analyzer. Classify the following customer reply into exactly one of these three categories:
+- OPT_OUT: The user wants to stop receiving messages, unsubscribe, or is angry.
+- QUESTION: The user is asking a question about the product or service.
+- POSITIVE: The user is expressing satisfaction or simple acknowledgment.
+
+Reply: "${replyText}"
+
+Return a JSON object with a single "sentiment" string matching one of the three categories exactly.`;
+
+    const responseSchema = {
+      type: SchemaType.OBJECT,
+      properties: {
+        sentiment: { type: SchemaType.STRING, enum: ["OPT_OUT", "QUESTION", "POSITIVE"] }
+      },
+      required: ["sentiment"]
     };
+
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: responseSchema,
+      }
+    });
+
+    return JSON.parse(result.response.text()).sentiment;
+  } catch (error) {
+    console.error("AI Error (analyzeSentiment):", error.message);
+    // Safe fallback
+    return "QUESTION";
+  }
+}
+
+export async function generateABTestInsight(winnerVariant: any, allVariants: any[]) {
+  try {
+    if (!apiKey) throw new Error("No API key");
+
+    const prompt = `You are a marketing data scientist. We ran an A/B/C test on 3 message variants.
+Winning Variant: ${JSON.stringify(winnerVariant)}
+All Variants: ${JSON.stringify(allVariants)}
+
+Provide a very concise 1-2 sentence explanation of WHY the winning variant likely outperformed the others (e.g., focusing on its tone, urgency, or clarity).
+
+Return a JSON object with a single "insight" string.`;
+
+    const responseSchema = {
+      type: SchemaType.OBJECT,
+      properties: {
+        insight: { type: SchemaType.STRING }
+      },
+      required: ["insight"]
+    };
+
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: responseSchema,
+      }
+    });
+
+    return JSON.parse(result.response.text()).insight;
+  } catch (error) {
+    console.error("AI Error (generateABTestInsight):", error.message);
+    return "The winning variant achieved the highest engagement score.";
   }
 }
 

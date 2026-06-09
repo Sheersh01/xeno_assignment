@@ -17,7 +17,7 @@ export default function NewCampaignPage() {
     step, setStep, 
     segmentId, segmentName, segmentDescription, setSegment,
     goal, setGoal,
-    subject, message, setMessage,
+    variants, setVariants,
     channel, setChannel,
     reset
   } = useCampaignStore();
@@ -38,8 +38,8 @@ export default function NewCampaignPage() {
     if (!goal) return;
     setLoading(true);
     try {
-      const res = await generateMessage(goal, segmentDescription);
-      setMessage(res.subject, res.message);
+      const generatedVariants = await generateMessage(goal, segmentDescription);
+      setVariants(generatedVariants);
       setStep(3);
     } catch (err) {
       console.error(err);
@@ -63,13 +63,20 @@ export default function NewCampaignPage() {
     }
   };
 
+  const handleVariantChange = (index: number, field: 'subject' | 'message', value: string) => {
+    const newVariants = [...variants];
+    newVariants[index][field] = value;
+    setVariants(newVariants);
+  };
+
   const handleCreate = async () => {
     setLoading(true);
     try {
       const res = await createCampaign({
         name: `${goal} Campaign`,
         segmentId,
-        message: `${subject}\n\n${message}`,
+        message: "A/B Testing Variants", // Placeholder, we rely on variants array
+        variants,
         channel,
       });
       reset();
@@ -85,7 +92,7 @@ export default function NewCampaignPage() {
     <div className="p-8 max-w-4xl mx-auto space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Create Campaign</h1>
-        <p className="text-sm text-[#A1A8B3]">AI-assisted campaign creation wizard.</p>
+        <p className="text-sm text-[#A1A8B3]">AI-assisted autonomous A/B testing campaign wizard.</p>
       </div>
 
       <div className="flex items-center gap-2 mb-8 text-sm font-medium">
@@ -127,7 +134,7 @@ export default function NewCampaignPage() {
 
       {step === 2 && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h2 className="text-lg font-medium">Generate Message</h2>
+          <h2 className="text-lg font-medium">Generate A/B Test Variants</h2>
           <Card>
             <CardContent className="pt-6 space-y-4">
               <div className="space-y-2">
@@ -148,7 +155,7 @@ export default function NewCampaignPage() {
           <div className="flex justify-between mt-6">
             <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
             <Button onClick={handleGenerateMessage} disabled={!goal || loading} className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white">
-              {loading ? "Generating..." : "Generate with AI"} <Sparkles className="w-4 h-4 ml-2" />
+              {loading ? "Generating 3 Variants..." : "Generate 3 Variants"} <Sparkles className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </div>
@@ -156,23 +163,37 @@ export default function NewCampaignPage() {
 
       {step === 3 && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h2 className="text-lg font-medium">Review Message & Select Channel</h2>
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#A1A8B3]">Subject</label>
-                <Input value={subject} onChange={(e) => setMessage(e.target.value, message)} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#A1A8B3]">Message</label>
-                <Textarea value={message} onChange={(e) => setMessage(subject, e.target.value)} className="h-32" />
-              </div>
-            </CardContent>
-          </Card>
+          <h2 className="text-lg font-medium">Review Variants & Select Channel</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {variants.map((variant, idx) => (
+              <Card key={idx}>
+                <CardHeader>
+                  <CardTitle className="text-base text-[#A1A8B3]">Variant {String.fromCharCode(65 + idx)}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-[#A1A8B3]">Subject</label>
+                    <Input 
+                      value={variant.subject} 
+                      onChange={(e) => handleVariantChange(idx, 'subject', e.target.value)} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-[#A1A8B3]">Message</label>
+                    <Textarea 
+                      value={variant.message} 
+                      onChange={(e) => handleVariantChange(idx, 'message', e.target.value)} 
+                      className="h-32 text-sm" 
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
           <div className="flex justify-between mt-6">
             <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
-            <Button onClick={handleGetRecommendation} disabled={!message || loading} className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white">
+            <Button onClick={handleGetRecommendation} disabled={variants.length === 0 || loading} className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white">
               {loading ? "Analyzing..." : "Get Channel Recommendation"} <Sparkles className="w-4 h-4 ml-2" />
             </Button>
           </div>
@@ -218,17 +239,21 @@ export default function NewCampaignPage() {
                     </Badge>
                   </div>
                 </div>
+                <div>
+                  <p className="text-xs text-[#A1A8B3] mb-1">Testing Mode</p>
+                  <Badge variant="outline" className="text-[#8B5CF6] border-[#8B5CF6]/50">Autonomous A/B Testing</Badge>
+                </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm text-[#A1A8B3]">Message Preview</CardTitle>
+                <CardTitle className="text-sm text-[#A1A8B3]">Selected Variants</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="p-4 bg-[#0B0D0F] rounded-lg border border-[#1E2329]">
-                  <p className="font-semibold border-b border-[#1E2329] pb-2 mb-2">{subject}</p>
-                  <p className="text-sm whitespace-pre-wrap">{message}</p>
+                  <p className="font-semibold text-sm border-b border-[#1E2329] pb-2 mb-2">3 AI Variants generated</p>
+                  <p className="text-sm text-[#A1A8B3]">15% of the audience will be split among the variants. The highest performing variant will automatically be sent to the remaining 85%.</p>
                 </div>
               </CardContent>
             </Card>
@@ -237,7 +262,7 @@ export default function NewCampaignPage() {
           <div className="flex justify-between mt-6">
             <Button variant="outline" onClick={() => setStep(3)}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
             <Button onClick={handleCreate} disabled={loading} className="bg-white text-black hover:bg-gray-200">
-              {loading ? "Creating..." : "Create Campaign"} <Send className="w-4 h-4 ml-2" />
+              {loading ? "Creating..." : "Launch Experiment"} <Send className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </div>

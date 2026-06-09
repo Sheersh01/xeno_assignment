@@ -17,15 +17,18 @@ Unlike traditional simple CRUD apps, this backend is built for scale. It handles
 ### 2. The AI Service (`services/ai.service.ts`)
 Acts as the central gateway to Google's Gemini API (utilizing `gemini-2.5-flash`). It exposes heavily typed, schema-enforced functions:
 - **`generateSegmentFilter`**: Converts natural language into a valid Prisma JSON object.
-- **`generateCampaignMessage`**: Generates personalized copy based on segment descriptions.
+- **`generateCampaignMessage`**: Generates 3 distinct personalized copy variants (A/B/C) based on segment descriptions.
 - **`recommendChannel`**: Evaluates segment data to recommend SMS, Email, or WhatsApp.
+- **`analyzeSentiment`**: Intercepts customer reply text and classifies intent (e.g., `OPT_OUT`).
+- **`generateABTestInsight`**: Analyzes the mathematical winner of an A/B test and explains its success.
 - **`generateCampaignInsight`**: Analyzes final delivery metrics to generate a 1-sentence executive summary.
 - *Graceful Degradation*: Every AI function implements a safe `catch` block that returns predictable fallback data if the API rate-limits (503) or the key is missing.
 
 ### 3. The Queueing Engine (BullMQ + Redis)
 To prevent the main API thread from locking up during mass dispatches or heavy webhook traffic, all heavy lifting is pushed to background workers:
-- **`dispatch-queue`**: When a campaign launches, every single customer communication is queued here. A worker processes this queue and pushes requests to the external Channel Simulator.
-- **`callback-queue`**: The Channel Simulator fires lifecycle webhooks (`DELIVERED`, `OPENED`, `FAILED`) to the CRM. The CRM immediately drops the webhook into this queue (returning a fast `200 OK`) and a worker updates the database asynchronously.
+- **`dispatch-queue`**: When a campaign launches, customer communications are queued here. A worker processes this queue and pushes requests to the external Channel Simulator.
+- **`ab-test-queue`**: Used for delaying A/B test evaluations. A worker fires after 15 seconds, calculates scores for Variant A/B/C, selects the winner, and launches the remaining dispatch.
+- **`callback-queue`**: The Channel Simulator fires lifecycle webhooks (`DELIVERED`, `OPENED`, `FAILED`, `REPLIED`) to the CRM. The CRM immediately drops the webhook into this queue (returning a fast `200 OK`) and a worker updates the database asynchronously.
 - **`insights-queue`**: Once a campaign completes, a job is queued here to trigger the AI analysis worker.
 - **Bull Board**: A live UI to monitor queues is mounted at `/admin/queues`.
 
@@ -37,7 +40,9 @@ To prevent the main API thread from locking up during mass dispatches or heavy w
 - **Redis** & **BullMQ** (Job Queues)
 - **Google Generative AI SDK**
 
-## 🛠 Recent Optimizations
+## 🛠 Recent Optimizations & Features
+- **Autonomous A/B Testing Worker**: Added the `ab-test.worker.ts` which uses an engagement scoring formula `(Opened*2 + Clicked*5 + Purchased*10)` to select a winning variant autonomously after a 15-second dynamic sampling delay.
+- **Sentiment Analysis & Compliance Engine**: The `callback.worker.ts` now routes incoming `REPLIED` webhooks to Gemini. If the payload text is classified as an `OPT_OUT`, the user's global `dnd` flag is immediately toggled to maintain compliance.
 - **Campaign Payload Optimization**: Fixed a critical `Network Error` caused by loading massive relational trees (`campaign -> communications -> events`) for large segments. The `getCampaignById` endpoint now uses Prisma nested pagination (`take: 15` on communications) to keep the JSON payload lightning fast and prevent Node.js memory crashes.
 - **Server-Side Customer Search**: Refactored the `/customers` endpoint to accept a `?query=` parameter, utilizing Prisma's `contains` filter (case-insensitive) to search across millions of records efficiently, limiting returns to `take: 50`.
 

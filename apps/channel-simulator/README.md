@@ -14,7 +14,8 @@ The Channel Simulator mimics the behavior of these external vendors. When the CR
    - It always sends a `SENT` status.
    - 90% of the time, it sends a `DELIVERED` status.
    - 10% of the time, it sends a `FAILED` status.
-   - It randomly simulates `OPENED` and `CLICKED` statuses to generate realistic dashboard telemetry.
+   - It randomly simulates `OPENED`, `CLICKED`, and `PURCHASED` statuses to generate realistic dashboard telemetry.
+   - It occasionally simulates a `REPLIED` status containing mock user text (e.g., "Stop texting me" or "Looks great") to trigger backend sentiment engines.
    - It introduces random `setTimeout` delays between each webhook call to realistically simulate network latency and human interaction times.
 
 ## 🚀 Tech Stack
@@ -23,7 +24,8 @@ The Channel Simulator mimics the behavior of these external vendors. When the CR
 - **TypeScript**
 - **Axios** (for firing webhooks back to the CRM)
 
-## 🛠 Recent Optimizations
+## 🛠 Recent Optimizations & Features
+- **Simulated Conversational Webhooks**: Added randomized logic to fire `REPLIED` webhooks shortly after a `DELIVERED` status. This passes a mocked text payload (such as "Unsubscribe me") over the wire to test the CRM's new Sentiment Analysis compliance engines.
 - **Resilient Webhook Flow**: Verified that the simulated randomized webhook intervals (delivering `SENT`, `OPENED`, `FAILED` payloads) correctly integrate with the CRM backend's updated polling schema without desyncing Live Activity Feeds.
 
 ## 📦 Setup & Installation

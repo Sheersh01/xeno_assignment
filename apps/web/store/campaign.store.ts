@@ -1,20 +1,24 @@
 import { create } from "zustand";
 
+interface Variant {
+  subject: string;
+  message: string;
+}
+
 interface CampaignState {
   step: number;
   segmentId: string | null;
   segmentName: string;
   segmentDescription: string;
   goal: string;
-  subject: string;
-  message: string;
+  variants: Variant[];
   channel: string;
   
   // Actions
   setStep: (step: number) => void;
   setSegment: (id: string, name: string, description: string) => void;
   setGoal: (goal: string) => void;
-  setMessage: (subject: string, message: string) => void;
+  setVariants: (variants: Variant[]) => void;
   setChannel: (channel: string) => void;
   reset: () => void;
 }
@@ -25,14 +29,13 @@ export const useCampaignStore = create<CampaignState>((set) => ({
   segmentName: "",
   segmentDescription: "",
   goal: "",
-  subject: "",
-  message: "",
+  variants: [],
   channel: "EMAIL",
 
   setStep: (step) => set({ step }),
   setSegment: (id, name, description) => set({ segmentId: id, segmentName: name, segmentDescription: description }),
   setGoal: (goal) => set({ goal }),
-  setMessage: (subject, message) => set({ subject, message }),
+  setVariants: (variants) => set({ variants }),
   setChannel: (channel) => set({ channel }),
   reset: () => set({
     step: 1,
@@ -40,8 +43,7 @@ export const useCampaignStore = create<CampaignState>((set) => ({
     segmentName: "",
     segmentDescription: "",
     goal: "",
-    subject: "",
-    message: "",
+    variants: [],
     channel: "EMAIL",
   }),
 }));

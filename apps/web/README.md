@@ -15,8 +15,8 @@ We deliberately avoided standard "generic SaaS templates" or over-used Tailwind 
 1. **Dashboard (`/`)**: Aggregates high-level metrics and plots campaign funnels and delivery trends using custom-styled Recharts area and bar graphs.
 2. **Customers Directory (`/customers`)**: A robust data table utilizing a Radix UI slide-over Dialog to view specific customer data, lifetime value (LTV), and recent order histories.
 3. **AI Audience Builder (`/segments`)**: A sleek, chat-driven interface. Submitting natural language requests hits the backend's Gemini integration and returns a precise Prisma JSON query and an instant audience calculation.
-4. **Campaign Wizard (`/campaigns/new`)**: A 5-step, interactive flow powered by **Zustand** global state. Users select a segment, prompt the AI to generate personalized marketing copy, let the AI recommend the best delivery channel, preview the payload, and dispatch it.
-5. **Campaign Live Details (`/campaigns/[id]`)**: Features a **Live Delivery Pipeline**. Once a campaign is launched, the component polls the backend every 3 seconds, animating the Sent, Delivered, Opened, Clicked, and Failed counters in real-time as the background workers process webhooks. 
+4. **Campaign Wizard (`/campaigns/new`)**: A 5-step interactive flow. Users select an audience segment, and the AI automatically generates 3 distinct A/B testing variants (Urgency, Value, Casual). Users review the AI's channel recommendation before launching the experiment.
+5. **Campaign Live Details (`/campaigns/[id]`)**: Features a **Live Delivery Pipeline** and a dedicated **Live A/B Testing** grid. While the 15-second experiment runs, it updates the variant scores in real-time. Once the winner is selected, the page displays a trophy banner with the Gemini-generated insight on why it won. It also detects "REPLIED" events in the live feed.
 6. **Executive Analytics (`/analytics`)**: Aggregates AI Insights and plots delivery rates across all historic campaigns.
 
 ## 🚀 Tech Stack
@@ -26,7 +26,8 @@ We deliberately avoided standard "generic SaaS templates" or over-used Tailwind 
 - **API Client**: Axios (`lib/api.ts`)
 - **Data Visualization**: Recharts
 
-## 🛠 Recent Optimizations
+## 🛠 Recent Optimizations & Features
+- **A/B Testing UI Integration**: Redesigned the Campaign Details dashboard to gracefully handle the complex `isTestingPhase` state, rendering live split-test statistics before transitioning to a "Winner Selected" insight view.
 - **Debounced Search with Caching**: The `/customers` directory now utilizes a custom `useDebounce` hook to delay backend search queries by 300ms, coupled with a `Map` cache to instantly render previously searched queries without redundant network calls.
 - **Live Polling Fix**: Resolved an issue in the `/campaigns/[id]` Live Activity Feed where real-time stats would briefly reset to 0 by perfectly mapping the polling schema to the initial SSR state.
 

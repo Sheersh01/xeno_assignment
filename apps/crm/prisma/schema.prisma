@@ -39,6 +39,7 @@ enum EventType {
   CLICKED
   PURCHASED
   FAILED
+  REPLIED
 }
 
 model Customer {
@@ -54,6 +55,9 @@ phone String @unique
   avgOrderValue Decimal @default(0)
 
   lastOrderDate DateTime?
+
+  dnd       Boolean @default(false)
+  dndReason String?
 
   createdAt DateTime @default(now())
 
@@ -130,6 +134,13 @@ model Campaign {
   conversions Conversion[]
 
   aiInsight String?
+
+  variants          Json?
+  winnerIndex       Int?
+  abTestCompleted   Boolean   @default(false)
+  abTestStartedAt   DateTime?
+  abTestCompletedAt DateTime?
+  abTestSampleSize  Int       @default(0)
 }
 
 model Communication {
@@ -146,6 +157,8 @@ model Communication {
   status CommunicationStatus @default(PENDING)
 
   channel String
+
+  variantIndex Int?
 
   retryCount Int @default(0)
 

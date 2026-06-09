@@ -5,7 +5,7 @@ import { getCampaignById, launchCampaign, getCampaignStats, deleteCampaign } fro
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Rocket, Activity, Send, CheckCircle2, AlertCircle, Eye, MousePointerClick, Sparkles, ShoppingBag, Trash2 } from "lucide-react";
+import { Rocket, Activity, Send, CheckCircle2, AlertCircle, Eye, MousePointerClick, Sparkles, ShoppingBag, Trash2, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 
@@ -35,7 +35,10 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
       try {
         const data = await getCampaignById(id);
         setCampaign(data);
-        if (data.stats) setStats(data.stats);
+        if (data.stats) {
+          const s = await getCampaignStats(id);
+          setStats(s);
+        }
       } catch (err) {
         console.error(err);
       }
@@ -51,7 +54,6 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
           const s = await getCampaignStats(id);
           setStats(s);
           
-          // Optional: Re-fetch campaign to see if status changed to COMPLETED/FAILED
           const c = await getCampaignById(id);
           setCampaign(c);
         } catch (err) {
@@ -68,6 +70,8 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
       await launchCampaign(id);
       const updated = await getCampaignById(id);
       setCampaign(updated);
+      const s = await getCampaignStats(id);
+      setStats(s);
     } catch (err) {
       console.error(err);
     } finally {
@@ -76,6 +80,9 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
   };
 
   if (!campaign) return <div className="p-8 text-[#A1A8B3]">Loading...</div>;
+
+  const isABTest = Array.isArray(campaign.variants) && campaign.variants.length === 3;
+  const isTestingPhase = isABTest && campaign.status === 'RUNNING' && !campaign.abTestCompleted;
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
@@ -86,6 +93,16 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
             <Badge variant={campaign.status === 'RUNNING' ? 'success' : campaign.status === 'DRAFT' ? 'warning' : 'default'}>
               {campaign.status}
             </Badge>
+            {isTestingPhase && (
+              <Badge variant="outline" className="border-yellow-500/50 text-yellow-500">
+                🟡 A/B Testing in Progress
+              </Badge>
+            )}
+            {campaign.abTestCompleted && (
+              <Badge variant="outline" className="border-[#22C55E]/50 text-[#22C55E]">
+                🟢 Winner Selected
+              </Badge>
+            )}
           </div>
           <p className="text-sm text-[#A1A8B3]">Created {format(new Date(campaign.createdAt), 'PPpp')}</p>
         </div>
@@ -111,6 +128,68 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
             <div>
               <h3 className="font-semibold text-lg text-[#F8F9FA] mb-1">AI Executive Summary</h3>
               <p className="text-[#A1A8B3] leading-relaxed">{campaign.aiInsight}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {isTestingPhase && stats?.variantStats && (
+        <Card className="border-yellow-500/50">
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Activity className="w-4 h-4 text-yellow-500" />
+              Live A/B Testing Performance
+            </CardTitle>
+            <CardDescription>
+              Evaluating {campaign.abTestSampleSize} users. Auto-optimization in progress...
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              {stats.variantStats.map((vStat: any, i: number) => {
+                const openRate = vStat.sent > 0 ? Math.round((vStat.opened / vStat.sent) * 100) : 0;
+                const clickRate = vStat.opened > 0 ? Math.round((vStat.clicked / vStat.opened) * 100) : 0;
+                return (
+                  <div key={i} className="p-4 bg-[#0B0D0F] rounded-lg border border-[#1E2329]">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="font-semibold">Variant {String.fromCharCode(65 + i)}</span>
+                      <Badge variant="outline" className="text-[#8B5CF6] border-[#8B5CF6]/50">Score: {vStat.score}</Badge>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-[#A1A8B3]">Sent</span>
+                        <span>{vStat.sent}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#A1A8B3]">Open Rate</span>
+                        <span>{openRate}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#A1A8B3]">Click Rate</span>
+                        <span>{clickRate}%</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {campaign.abTestCompleted && typeof campaign.winnerIndex === 'number' && (
+        <Card className="border-[#22C55E]/50 bg-[#22C55E]/5">
+          <CardContent className="pt-6 flex gap-4 items-start">
+            <div className="w-10 h-10 rounded-full bg-[#22C55E]/20 flex items-center justify-center shrink-0 mt-1">
+              <Trophy className="w-5 h-5 text-[#22C55E]" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg text-[#F8F9FA] mb-1">
+                Winner: Variant {String.fromCharCode(65 + campaign.winnerIndex)}
+              </h3>
+              <p className="text-[#A1A8B3] leading-relaxed text-sm">
+                The remaining {campaign.segment?.audienceSize - campaign.abTestSampleSize} customers are receiving this variant.
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -149,10 +228,22 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
             <CardHeader>
               <CardTitle className="text-sm">Message Content</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="p-4 bg-[#0B0D0F] rounded-lg border border-[#1E2329] font-mono text-sm leading-relaxed">
-                <p className="whitespace-pre-wrap">{campaign.message}</p>
-              </div>
+            <CardContent className="space-y-4">
+              {isABTest ? (
+                campaign.variants.map((v: any, idx: number) => (
+                  <div key={idx} className={`p-4 rounded-lg border font-mono text-sm leading-relaxed ${campaign.winnerIndex === idx ? 'bg-[#22C55E]/10 border-[#22C55E]' : 'bg-[#0B0D0F] border-[#1E2329]'}`}>
+                    <p className="text-xs text-[#A1A8B3] font-sans mb-2 font-semibold">
+                      Variant {String.fromCharCode(65 + idx)} {campaign.winnerIndex === idx && "(WINNER)"}
+                    </p>
+                    <p className="font-bold border-b border-[#1E2329] pb-2 mb-2 text-[#F8F9FA]">{v.subject}</p>
+                    <p className="whitespace-pre-wrap">{v.message}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 bg-[#0B0D0F] rounded-lg border border-[#1E2329] font-mono text-sm leading-relaxed">
+                  <p className="whitespace-pre-wrap">{campaign.message}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -201,16 +292,23 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
             </CardHeader>
             <CardContent>
               <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                {campaign.communications?.flatMap((c: any) => c.events?.map((e: any) => ({ ...e, customerName: c.customer?.name })))
+                {campaign.communications?.flatMap((c: any) => c.events?.map((e: any) => ({ ...e, customerName: c.customer?.name, dndReason: e.metadata?.replyText })))
                   .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
                   .slice(0, 15)
                   .map((event: any, i: number) => (
                     <div key={i} className="flex flex-col gap-1 pb-4 border-b border-[#1E2329] last:border-0 last:pb-0">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-[#F8F9FA]">{event.eventType}</span>
+                        <span className={`text-xs font-medium ${event.eventType === 'REPLIED' ? 'text-[#8B5CF6]' : 'text-[#F8F9FA]'}`}>
+                          {event.eventType}
+                        </span>
                         <span className="text-xs text-[#A1A8B3]">{format(new Date(event.timestamp), 'h:mm a')}</span>
                       </div>
                       <span className="text-xs text-[#A1A8B3] truncate">to {event.customerName}</span>
+                      {event.eventType === 'REPLIED' && event.dndReason && (
+                        <span className="text-xs text-[#A1A8B3] bg-[#8B5CF6]/10 p-1 rounded italic mt-1 truncate">
+                          "{event.dndReason}"
+                        </span>
+                      )}
                     </div>
                   ))}
                   {(!campaign.communications || campaign.communications.length === 0) && (

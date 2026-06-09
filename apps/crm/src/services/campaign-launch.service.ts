@@ -3,7 +3,7 @@ import {
   CommunicationStatus,
 } from "@prisma/client";
 import { prisma } from "../lib/prisma";
-import { dispatchQueue } from "../queues";
+import { dispatchQueue, abTestQueue } from "../queues";
 
 export async function launchCampaign(campaignId: string) {
   // 1. Fetch campaign
@@ -30,25 +30,60 @@ export async function launchCampaign(campaignId: string) {
     );
   }
 
-  // 2. Resolve audience from segment
-  const query = campaign.segment.query ? (typeof campaign.segment.query === 'string' ? JSON.parse(campaign.segment.query) : campaign.segment.query) : {};
+  // 2. Resolve audience from segment, excluding DND customers
+  const baseQuery = campaign.segment.query ? (typeof campaign.segment.query === 'string' ? JSON.parse(campaign.segment.query) : campaign.segment.query) : {};
+  const query = {
+    ...baseQuery,
+    dnd: false
+  };
 
-  // We safely cast the JSON query from the AI segment builder directly to the Prisma where clause.
   const customers = await prisma.customer.findMany({
     where: query as any,
   });
 
-  // 3. Create communications
-  const communicationsData = customers.map((customer) => ({
-    campaignId: campaign.id,
-    customerId: customer.id,
-    channel: campaign.channel,
-    status: CommunicationStatus.PENDING,
-  }));
+  if (customers.length === 0) {
+    throw new Error("Audience is empty or all opted out.");
+  }
 
-  // Create many doesn't return created records in standard Prisma (without preview features or specific adapters), 
-  // so we will create them and then fetch them or use a transaction if needed. 
-  // Wait, Prisma doesn't return IDs for createMany in Postgres reliably. Let's create and then fetch.
+  // 3. Determine if A/B Test and calculate dynamic sample
+  const variantsArray = Array.isArray(campaign.variants) ? campaign.variants : [];
+  const isABTest = variantsArray.length === 3;
+  
+  let targetCustomers = customers;
+  let abTestSampleSize = 0;
+
+  // We shuffle the array to ensure random sampling
+  const shuffledCustomers = [...customers].sort(() => 0.5 - Math.random());
+
+  if (isABTest) {
+    const totalAudience = customers.length;
+    // Math.max(15, Math.floor(15%))
+    const calculatedSample = Math.max(15, Math.floor(totalAudience * 0.15));
+    // Never sample more than the total audience
+    abTestSampleSize = Math.min(totalAudience, calculatedSample);
+    
+    // We only take the sample for the initial dispatch
+    targetCustomers = shuffledCustomers.slice(0, abTestSampleSize);
+  } else {
+    targetCustomers = shuffledCustomers;
+  }
+
+  // 4. Create communications
+  const communicationsData = targetCustomers.map((customer, index) => {
+    let variantIndex = null;
+    if (isABTest) {
+      // Distribute evenly among 0, 1, 2
+      variantIndex = index % 3;
+    }
+    return {
+      campaignId: campaign.id,
+      customerId: customer.id,
+      channel: campaign.channel,
+      status: CommunicationStatus.PENDING,
+      variantIndex,
+    };
+  });
+
   await prisma.communication.createMany({
     data: communicationsData,
   });
@@ -60,7 +95,7 @@ export async function launchCampaign(campaignId: string) {
     }
   });
 
-  // 4. Create campaign stats
+  // 5. Create campaign stats
   await prisma.campaignStats.upsert({
     where: {
       campaignId: campaign.id,
@@ -77,37 +112,60 @@ export async function launchCampaign(campaignId: string) {
     },
   });
 
-  // 5. Mark campaign running
+  // 6. Update Campaign State
   await prisma.campaign.update({
-    where: {
-      id: campaign.id,
-    },
+    where: { id: campaign.id },
     data: {
       status: CampaignStatus.RUNNING,
+      abTestStartedAt: isABTest ? new Date() : null,
+      abTestSampleSize: isABTest ? abTestSampleSize : 0,
     },
   });
 
-  // 6. Enqueue jobs into dispatch-queue
-  const jobs = createdCommunications.map((comm) => ({
-    name: "send-communication",
-    data: {
-      communicationId: comm.id,
-      campaignId: comm.campaignId,
-      customerId: comm.customerId,
-      channel: comm.channel,
-      message: campaign.message,
-    },
-  }));
+  // 7. Enqueue initial dispatch jobs
+  const jobs = createdCommunications.map((comm) => {
+    let msgToSend = campaign.message;
+    if (isABTest && comm.variantIndex !== null) {
+      msgToSend = variantsArray[comm.variantIndex].message;
+    }
+    return {
+      name: "send-communication",
+      data: {
+        communicationId: comm.id,
+        campaignId: comm.campaignId,
+        customerId: comm.customerId,
+        channel: comm.channel,
+        message: msgToSend,
+      },
+    };
+  });
 
   if (jobs.length > 0) {
     await dispatchQueue.addBulk(jobs);
+  }
+
+  // 8. If A/B test, schedule the evaluation job
+  if (isABTest && abTestSampleSize < customers.length) {
+    await abTestQueue.add(
+      "evaluate-ab-test",
+      { campaignId: campaign.id },
+      { delay: 15000 } // Wait 15 seconds
+    );
+  } else if (isABTest && abTestSampleSize >= customers.length) {
+    // If the sample size swallowed the whole audience, just end the test immediately
+    await prisma.campaign.update({
+      where: { id: campaign.id },
+      data: { abTestCompleted: true, abTestCompletedAt: new Date() }
+    });
   }
 
   return {
     campaignId: campaign.id,
     campaignName: campaign.name,
     audienceSize: customers.length,
-    communicationsCreated: customers.length,
+    communicationsCreated: targetCustomers.length,
     status: CampaignStatus.RUNNING,
+    isABTest,
+    abTestSampleSize
   };
 }
