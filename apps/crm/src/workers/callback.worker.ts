@@ -38,12 +38,14 @@ export const callbackWorker = new Worker(
       });
 
       // 2. Update Communication
+      const updateData: any = { lastEventAt: new Date() };
+      if (eventType !== 'REPLIED') {
+        updateData.status = eventType as CommunicationStatus;
+      }
+
       const comm = await tx.communication.update({
         where: { id: communicationId },
-        data: {
-          status: eventType as CommunicationStatus,
-          lastEventAt: new Date(),
-        },
+        data: updateData,
       });
 
       // 3. Update CampaignStats

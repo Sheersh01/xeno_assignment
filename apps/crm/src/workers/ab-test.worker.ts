@@ -86,13 +86,32 @@ export const abTestWorker = new Worker(
 
     // 7. Dispatch the remaining audience
     const baseQuery = campaign.segment.query ? (typeof campaign.segment.query === 'string' ? JSON.parse(campaign.segment.query) : campaign.segment.query) : {};
-    const query = {
+    const prismaQuery: any = {
       ...baseQuery,
       dnd: false
     };
 
+    if (prismaQuery.lastOrderDays) {
+      prismaQuery.lastOrderDate = {};
+      if (prismaQuery.lastOrderDays.gt !== undefined) {
+        const date = new Date();
+        date.setDate(date.getDate() - prismaQuery.lastOrderDays.gt);
+        prismaQuery.lastOrderDate.lt = date;
+      }
+      if (prismaQuery.lastOrderDays.lt !== undefined) {
+        const date = new Date();
+        date.setDate(date.getDate() - prismaQuery.lastOrderDays.lt);
+        prismaQuery.lastOrderDate.gt = date;
+      }
+      delete prismaQuery.lastOrderDays;
+    }
+  
+    if (prismaQuery.city && typeof prismaQuery.city === 'string') {
+      prismaQuery.city = { contains: prismaQuery.city, mode: 'insensitive' };
+    }
+
     const allValidCustomers = await prisma.customer.findMany({
-      where: query as any,
+      where: prismaQuery,
     });
 
     // Filter out customers who already received a communication

@@ -32,13 +32,32 @@ export async function launchCampaign(campaignId: string) {
 
   // 2. Resolve audience from segment, excluding DND customers
   const baseQuery = campaign.segment.query ? (typeof campaign.segment.query === 'string' ? JSON.parse(campaign.segment.query) : campaign.segment.query) : {};
-  const query = {
-    ...baseQuery,
-    dnd: false
-  };
+  
+  const prismaQuery: any = { ...baseQuery, dnd: false };
+
+  // Map dynamic relative lastOrderDays to absolute lastOrderDate for Prisma
+  if (prismaQuery.lastOrderDays) {
+    prismaQuery.lastOrderDate = {};
+    if (prismaQuery.lastOrderDays.gt !== undefined) {
+      const date = new Date();
+      date.setDate(date.getDate() - prismaQuery.lastOrderDays.gt);
+      prismaQuery.lastOrderDate.lt = date; // older than X days means date < today - X
+    }
+    if (prismaQuery.lastOrderDays.lt !== undefined) {
+      const date = new Date();
+      date.setDate(date.getDate() - prismaQuery.lastOrderDays.lt);
+      prismaQuery.lastOrderDate.gt = date; // newer than X days means date > today - X
+    }
+    delete prismaQuery.lastOrderDays;
+  }
+
+  // Ensure city is case-insensitive contains
+  if (prismaQuery.city && typeof prismaQuery.city === 'string') {
+    prismaQuery.city = { contains: prismaQuery.city, mode: 'insensitive' };
+  }
 
   const customers = await prisma.customer.findMany({
-    where: query as any,
+    where: prismaQuery,
   });
 
   if (customers.length === 0) {

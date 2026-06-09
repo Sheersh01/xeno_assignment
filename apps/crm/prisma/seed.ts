@@ -135,47 +135,58 @@ async function updateCustomerMetrics(customers: Customer[]) {
 }
 
 async function seedSegments() {
-  await prisma.segment.createMany({
-    data: [
-      {
-        name: "High Value Customers",
-        description: "Customers spending over ₹5000",
-        naturalLanguageInput: "customers who spent more than 5000",
-        query: {
-          totalSpend: {
-            gt: 5000,
-          },
-        },
-        audienceSize: 0,
-      },
+  const segmentsData = [
+    {
+      name: "High Value Customers",
+      description: "Customers spending over ₹5000",
+      naturalLanguageInput: "customers who spent more than 5000",
+      query: { totalSpend: { gt: 5000 } },
+    },
+    {
+      name: "Dormant Customers",
+      description: "No purchases in last 60 days",
+      naturalLanguageInput: "customers inactive for 60 days",
+      query: { lastOrderDays: { gt: 60 } },
+    },
+    {
+      name: "Recent Buyers",
+      description: "Purchased in last 30 days",
+      naturalLanguageInput: "customers purchased within 30 days",
+      query: { lastOrderDays: { lt: 30 } },
+    },
+  ];
 
-      {
-        name: "Dormant Customers",
-        description: "No purchases in last 60 days",
-        naturalLanguageInput: "customers inactive for 60 days",
-        query: {
-          lastOrderDays: {
-            gt: 60,
-          },
-        },
-        audienceSize: 0,
-      },
+  for (const seg of segmentsData) {
+    const prismaQuery: any = { ...seg.query, dnd: false };
 
-      {
-        name: "Recent Buyers",
-        description: "Purchased in last 30 days",
-        naturalLanguageInput: "customers purchased within 30 days",
-        query: {
-          lastOrderDays: {
-            lt: 30,
-          },
-        },
-        audienceSize: 0,
-      },
-    ],
-  });
+    if (prismaQuery.lastOrderDays) {
+      prismaQuery.lastOrderDate = {};
+      if (prismaQuery.lastOrderDays.gt !== undefined) {
+        const date = new Date();
+        date.setDate(date.getDate() - prismaQuery.lastOrderDays.gt);
+        prismaQuery.lastOrderDate.lt = date;
+      }
+      if (prismaQuery.lastOrderDays.lt !== undefined) {
+        const date = new Date();
+        date.setDate(date.getDate() - prismaQuery.lastOrderDays.lt);
+        prismaQuery.lastOrderDate.gt = date;
+      }
+      delete prismaQuery.lastOrderDays;
+    }
 
-  console.log("✅ Created 3 segments");
+    const audienceSize = await prisma.customer.count({
+      where: prismaQuery,
+    });
+
+    await prisma.segment.create({
+      data: {
+        ...seg,
+        audienceSize,
+      },
+    });
+  }
+
+  console.log("✅ Created 3 segments with calculated audience sizes");
 }
 
 
