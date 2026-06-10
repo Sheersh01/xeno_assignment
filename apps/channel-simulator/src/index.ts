@@ -5,9 +5,7 @@ import axios from 'axios';
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-const CRM_WEBHOOK_URL = 'http://localhost:4000/webhook/events';
-
+const CRM_WEBHOOK_URL = process.env.CRM_WEBHOOK_URL || 'http://localhost:4000/webhook/events';
 app.post('/send', (req, res) => {
   const { communicationId, customerId, channel, message } = req.body;
   
