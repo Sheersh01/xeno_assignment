@@ -122,8 +122,20 @@ export default function AnalyticsPage() {
             {loading ? (
               <div className="h-full flex flex-col justify-end gap-2 pb-4">
                 <div className="flex items-end gap-3 h-full px-2">
-                  {[60, 40, 75, 55, 80, 45, 65].map((h, i) => (
-                    <Skeleton key={i} className="flex-1 rounded-sm" style={{ height: `${h}%` }} />
+                  {[
+                    { h: 60, color: 'bg-white/20' },
+                    { h: 40, color: 'bg-white/10' },
+                    { h: 75, color: 'bg-white/20' },
+                    { h: 55, color: 'bg-white/10' },
+                    { h: 80, color: 'bg-white/20' },
+                    { h: 45, color: 'bg-white/10' },
+                    { h: 65, color: 'bg-white/20' },
+                  ].map((bar, i) => (
+                    <div
+                      key={i}
+                      className={`flex-1 rounded-sm animate-pulse ${bar.color}`}
+                      style={{ height: `${bar.h}%` }}
+                    />
                   ))}
                 </div>
                 <div className="flex gap-3 px-2">
@@ -160,12 +172,25 @@ export default function AnalyticsPage() {
             {loading ? (
               <div className="h-full flex flex-col justify-end gap-2 pb-4">
                 <div className="flex items-end gap-4 h-full px-2">
-                  {[80, 20, 60, 15, 90, 10, 70].map((h, i) => (
-                    <Skeleton key={i} className="flex-1 rounded-sm" style={{ height: `${h}%` }} />
+                  {[
+                    { h: 85, color: 'bg-emerald-500/30' },
+                    { h: 12, color: 'bg-red-500/30' },
+                    { h: 65, color: 'bg-emerald-500/30' },
+                    { h: 8,  color: 'bg-red-500/30' },
+                    { h: 92, color: 'bg-emerald-500/30' },
+                    { h: 15, color: 'bg-red-500/30' },
+                    { h: 72, color: 'bg-emerald-500/30' },
+                    { h: 10, color: 'bg-red-500/30' },
+                  ].map((bar, i) => (
+                    <div
+                      key={i}
+                      className={`flex-1 rounded-sm animate-pulse ${bar.color}`}
+                      style={{ height: `${bar.h}%` }}
+                    />
                   ))}
                 </div>
                 <div className="flex gap-4 px-2">
-                  {Array.from({ length: 7 }).map((_, i) => (
+                  {Array.from({ length: 8 }).map((_, i) => (
                     <Skeleton key={i} className="flex-1 h-2.5 rounded" />
                   ))}
                 </div>
