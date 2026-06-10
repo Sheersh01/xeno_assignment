@@ -193,6 +193,12 @@ async function seedSegments() {
 async function main() {
   console.log("🌱 Starting seed...");
 
+  const existingCount = await prisma.customer.count();
+  if (existingCount > 0) {
+    console.log("⏭️  Database already contains data. Skipping seed.");
+    return;
+  }
+
   await clearDatabase();
 
   console.log("🧹 Database cleared");
