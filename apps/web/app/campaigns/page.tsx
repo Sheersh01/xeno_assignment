@@ -5,12 +5,14 @@ import { getCampaigns } from "@/lib/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { SkeletonTableRow } from "@/components/ui/Skeleton";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Plus } from "lucide-react";
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
@@ -19,6 +21,8 @@ export default function CampaignsPage() {
         setCampaigns(data);
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     }
     load();
@@ -51,7 +55,11 @@ export default function CampaignsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {campaigns.map(camp => (
+            {loading
+              ? Array.from({ length: 5 }).map((_, i) => (
+                  <SkeletonTableRow key={i} cols={5} />
+                ))
+              : campaigns.map(camp => (
               <TableRow key={camp.id}>
                 <TableCell className="font-medium text-[13px]">
                   <Link href={`/campaigns/${camp.id}`} className="hover:underline underline-offset-4 transition-colors">
@@ -72,7 +80,7 @@ export default function CampaignsPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {campaigns.length === 0 && (
+            {!loading && campaigns.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-[#555] py-12 text-[13px]">
                   No campaigns found. Create your first one to get started.

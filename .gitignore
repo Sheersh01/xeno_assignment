@@ -1,0 +1,26 @@
+# Git ignore rules for the entire monorepo
+
+# Node modules
+node_modules/
+
+# Environment files (NEVER commit secrets)
+.env
+.env.local
+.env.production
+
+# Next.js build output
+apps/web/.next/
+
+# Prisma generated client
+apps/crm/node_modules/.prisma/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Personal reference files (not for public repo)
+explain.md
+apps/*/explain.md

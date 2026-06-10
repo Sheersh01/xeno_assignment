@@ -43,6 +43,8 @@ To prevent the main API thread from locking up during mass dispatches or heavy w
 ## 🛠 Recent Optimizations & Features
 - **Autonomous A/B Testing Worker**: Added the `ab-test.worker.ts` which uses an engagement scoring formula `(Opened*2 + Clicked*5 + Purchased*10)` to select a winning variant autonomously after a 15-second dynamic sampling delay.
 - **Sentiment Analysis & Compliance Engine**: The `callback.worker.ts` now routes incoming `REPLIED` webhooks to Gemini. If the payload text is classified as an `OPT_OUT`, the user's global `dnd` flag is immediately toggled to maintain compliance.
+- **AI Rate Limit Handling (BullMQ `DelayedError`)**: When Gemini returns a 429 rate-limit error during sentiment analysis, the AI service throws a custom `AIRateLimitError`. The Callback Worker catches this and throws BullMQ's native `DelayedError(15000)`, which instantly frees the worker thread and re-enqueues the job in Redis to retry 15 seconds later. No threads are blocked, no memory is wasted.
+- **Dispatch Worker Production Fix**: Fixed a critical bug where all dispatch jobs failed silently in production because the Channel Simulator URL was hardcoded to `localhost:4001`. The URL is now resolved at runtime via the `CHANNEL_SIMULATOR_URL` environment variable, enabling the CRM and Simulator to run as decoupled cloud services.
 - **Campaign Payload Optimization**: Fixed a critical `Network Error` caused by loading massive relational trees (`campaign -> communications -> events`) for large segments. The `getCampaignById` endpoint now uses Prisma nested pagination (`take: 15` on communications) to keep the JSON payload lightning fast and prevent Node.js memory crashes.
 - **Server-Side Customer Search**: Refactored the `/customers` endpoint to accept a `?query=` parameter, utilizing Prisma's `contains` filter (case-insensitive) to search across millions of records efficiently, limiting returns to `take: 50`.
 - **Accurate Analytics Aggregation**: Replaced naive array-length counting on the frontend with a highly optimized `GET /stats` API that uses native Prisma `COUNT()` operations directly on the database level, bypassing the 50-item network payload limit and ensuring accurate global dashboard metrics.
@@ -66,6 +68,7 @@ This backend is configured for deployment on **Render** using serverless databas
    - `DATABASE_URL`
    - `REDIS_URL`
    - `GEMINI_API_KEY`
+   - `CHANNEL_SIMULATOR_URL` — **Required for production!** Set this to your deployed Channel Simulator Render URL (e.g. `https://<your-simulator>.onrender.com`). Without this, all dispatch jobs will fail silently.
 
 ## 📦 Setup & Installation
 

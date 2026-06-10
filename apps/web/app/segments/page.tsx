@@ -5,6 +5,7 @@ import { Sparkles, ArrowRight, Save, Terminal, CheckCircle2, BrainCircuit, Light
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { buildSegment, explainSegment } from "@/lib/api";
 import axios from "axios";
 import { useRouter } from "next/navigation";
@@ -90,6 +91,7 @@ export default function SegmentsPage() {
 
       <div className="flex-1 flex flex-col gap-6">
         {segmentData ? (
+          // ... existing result card
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -142,6 +144,37 @@ export default function SegmentsPage() {
               <Button onClick={handleSave} disabled={saving} className="bg-[#EDEDED] text-[#000] hover:bg-[#A0A0A0]">
                 {saving ? "Saving..." : "Save Segment"} <Save className="w-3.5 h-3.5 ml-2" />
               </Button>
+            </div>
+          </motion.div>
+        ) : loading ? (
+          /* Skeleton shown while AI is processing the segment */
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="border border-[#222] bg-[#050505] p-6 lg:p-8 rounded-md space-y-6"
+          >
+            <div className="flex items-center gap-2">
+              <Skeleton className="w-5 h-5 rounded" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+            <div className="space-y-3">
+              <Skeleton className="h-3 w-40" />
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="w-4 h-4 rounded-full flex-shrink-0" />
+                  <Skeleton className="h-4 flex-1 max-w-xs" />
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-4 pt-6 border-t border-[#222]">
+              <div className="space-y-2">
+                <Skeleton className="h-2.5 w-28" />
+                <Skeleton className="h-7 w-24" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-2.5 w-28" />
+                <Skeleton className="h-5 w-36" />
+              </div>
             </div>
           </motion.div>
         ) : (

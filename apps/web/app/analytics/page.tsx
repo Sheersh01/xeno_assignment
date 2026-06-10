@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { getCampaigns } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from "recharts";
 import { Sparkles, TrendingUp, Presentation, BrainCircuit, Lightbulb, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function AnalyticsPage() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showBrief, setShowBrief] = useState(true);
   const [hoverLine, setHoverLine] = useState(false);
   const [hoverBar, setHoverBar] = useState(false);
@@ -20,6 +22,8 @@ export default function AnalyticsPage() {
         setCampaigns(data.filter((c: any) => c.status === 'COMPLETED' || c.status === 'RUNNING'));
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     }
     load();
@@ -105,6 +109,7 @@ export default function AnalyticsPage() {
       </AnimatePresence>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Engagement Performance Chart */}
         <Card className="min-w-0 flex flex-col transition-colors duration-500 hover:border-white/[0.15]" onMouseEnter={() => setHoverLine(true)} onMouseLeave={() => setHoverLine(false)}>
           <CardHeader className="border-b border-white/[0.05]">
             <CardTitle className={`text-sm font-medium flex items-center gap-2 transition-colors duration-500 ${hoverLine ? 'text-white' : ''}`}>
@@ -114,41 +119,72 @@ export default function AnalyticsPage() {
             <CardDescription className="text-xs">Opens and Clicks across recent campaigns.</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 h-[300px] min-h-[300px] w-full min-w-0 pt-6">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 0, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
-                <XAxis dataKey="name" stroke="#555" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                <YAxis stroke="#555" fontSize={11} tickLine={false} axisLine={false} dx={-10} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', fontSize: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }} 
-                  itemStyle={{ color: '#EDEDED' }}
-                />
-                <Line type="monotone" dataKey="opened" stroke={hoverLine ? '#ffffff' : '#888'} strokeWidth={2} dot={{ r: 3, fill: '#0A0A0A', strokeWidth: 2 }} activeDot={{ r: 5, fill: '#ffffff', stroke: '#000', strokeWidth: 2 }} />
-                <Line type="monotone" dataKey="clicked" stroke={hoverLine ? '#A0A0A0' : '#444'} strokeWidth={2} dot={{ r: 3, fill: '#0A0A0A', strokeWidth: 2 }} activeDot={{ r: 5, fill: '#A0A0A0', stroke: '#000', strokeWidth: 2 }} />
-              </LineChart>
-            </ResponsiveContainer>
+            {loading ? (
+              <div className="h-full flex flex-col justify-end gap-2 pb-4">
+                <div className="flex items-end gap-3 h-full px-2">
+                  {[60, 40, 75, 55, 80, 45, 65].map((h, i) => (
+                    <Skeleton key={i} className="flex-1 rounded-sm" style={{ height: `${h}%` }} />
+                  ))}
+                </div>
+                <div className="flex gap-3 px-2">
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <Skeleton key={i} className="flex-1 h-2.5 rounded" />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 0, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
+                  <XAxis dataKey="name" stroke="#555" fontSize={11} tickLine={false} axisLine={false} dy={10} />
+                  <YAxis stroke="#555" fontSize={11} tickLine={false} axisLine={false} dx={-10} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', fontSize: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }} 
+                    itemStyle={{ color: '#EDEDED' }}
+                  />
+                  <Line type="monotone" dataKey="opened" stroke={hoverLine ? '#ffffff' : '#888'} strokeWidth={2} dot={{ r: 3, fill: '#0A0A0A', strokeWidth: 2 }} activeDot={{ r: 5, fill: '#ffffff', stroke: '#000', strokeWidth: 2 }} />
+                  <Line type="monotone" dataKey="clicked" stroke={hoverLine ? '#A0A0A0' : '#444'} strokeWidth={2} dot={{ r: 3, fill: '#0A0A0A', strokeWidth: 2 }} activeDot={{ r: 5, fill: '#A0A0A0', stroke: '#000', strokeWidth: 2 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
+        {/* Delivery Rates Chart */}
         <Card className="min-w-0 flex flex-col transition-colors duration-500 hover:border-white/[0.15]" onMouseEnter={() => setHoverBar(true)} onMouseLeave={() => setHoverBar(false)}>
           <CardHeader className="border-b border-white/[0.05]">
             <CardTitle className={`text-sm font-medium transition-colors duration-500 ${hoverBar ? 'text-white' : ''}`}>Delivery Rates</CardTitle>
             <CardDescription className="text-xs">Volume of delivered vs failed communications.</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 h-[300px] min-h-[300px] w-full min-w-0 pt-6">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 0, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
-                <XAxis dataKey="name" stroke="#555" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                <YAxis stroke="#555" fontSize={11} tickLine={false} axisLine={false} dx={-10} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', fontSize: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
-                  cursor={{ fill: 'rgba(255,255,255,0.02)' }}
-                />
-                <Bar dataKey="delivered" fill={hoverBar ? '#10b981' : '#555'} radius={[2, 2, 0, 0]} barSize={16} activeBar={{ fill: '#34d399' }} />
-                <Bar dataKey="failed" fill={hoverBar ? '#ef4444' : '#222'} radius={[2, 2, 0, 0]} barSize={16} activeBar={{ fill: '#f87171' }} />
-              </BarChart>
-            </ResponsiveContainer>
+            {loading ? (
+              <div className="h-full flex flex-col justify-end gap-2 pb-4">
+                <div className="flex items-end gap-4 h-full px-2">
+                  {[80, 20, 60, 15, 90, 10, 70].map((h, i) => (
+                    <Skeleton key={i} className="flex-1 rounded-sm" style={{ height: `${h}%` }} />
+                  ))}
+                </div>
+                <div className="flex gap-4 px-2">
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <Skeleton key={i} className="flex-1 h-2.5 rounded" />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 0, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
+                  <XAxis dataKey="name" stroke="#555" fontSize={11} tickLine={false} axisLine={false} dy={10} />
+                  <YAxis stroke="#555" fontSize={11} tickLine={false} axisLine={false} dx={-10} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', fontSize: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
+                    cursor={{ fill: 'rgba(255,255,255,0.02)' }}
+                  />
+                  <Bar dataKey="delivered" fill={hoverBar ? '#10b981' : '#555'} radius={[2, 2, 0, 0]} barSize={16} activeBar={{ fill: '#34d399' }} />
+                  <Bar dataKey="failed" fill={hoverBar ? '#ef4444' : '#222'} radius={[2, 2, 0, 0]} barSize={16} activeBar={{ fill: '#f87171' }} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>

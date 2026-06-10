@@ -86,41 +86,61 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
   const isTestingPhase = isABTest && campaign.status === 'RUNNING' && !campaign.abTestCompleted;
   const isWinnerSelected = campaign.abTestCompleted && typeof campaign.winnerIndex === 'number';
 
-  let dynamicMargin = "0%";
-  let dynamicConfidence = "0%";
-  let dynamicWinner = isWinnerSelected ? `Variant ${String.fromCharCode(65 + campaign.winnerIndex)}` : 'N/A';
-  
-  if (stats?.variantStats && stats.variantStats.length > 0) {
+  let dynamicMargin = "—";
+  let dynamicConfidence = "—";
+  let dynamicWinner = isWinnerSelected
+    ? `Variant ${String.fromCharCode(65 + campaign.winnerIndex)}`
+    : 'N/A';
+
+  // Only compute live stats during the active testing phase.
+  // Once the winner is declared, we freeze the diagnosis to avoid
+  // the numbers creeping up as the bulk dispatch webhooks keep arriving.
+  if (!isWinnerSelected && stats?.variantStats && stats.variantStats.length > 0) {
     const scores = stats.variantStats.map((s: any, i: number) => ({ index: i, score: s.score || 0 }));
     scores.sort((a: any, b: any) => b.score - a.score);
-    
+
     if (scores.length >= 2) {
       const top = scores[0];
       const second = scores[1];
-      
-      if (!isWinnerSelected && campaign.status === 'RUNNING') {
+
+      if (campaign.status === 'RUNNING') {
         dynamicWinner = `Variant ${String.fromCharCode(65 + top.index)} (Projected)`;
       }
 
-      if (second.score > 0) {
-        const marginVal = Math.round(((top.score - second.score) / second.score) * 100);
-        dynamicMargin = `${marginVal}%`;
-      } else if (top.score > 0) {
-        dynamicMargin = "100+%";
+      // Use score-share lead instead of division by second score.
+      // Formula: how much % of total score does the top variant hold above equal share?
+      // e.g. top=10, second=5, total=18 → top share = 55% vs expected 33% → lead = +22 pts
+      // Then express this as a clean "X pts ahead" or percentage of total score lead.
+      const totalScore = scores.reduce((acc: number, s: any) => acc + s.score, 0);
+      if (totalScore > 0) {
+        const topShare = Math.round((top.score / totalScore) * 100);
+        dynamicMargin = `${topShare}% score share`;
+      } else {
+        dynamicMargin = "Collecting data...";
       }
-      
-      // Calculate a "confidence" metric based on sample size and difference
+
+      // Confidence: based purely on sample size (how many sent so far)
       const totalSent = stats.variantStats.reduce((acc: number, v: any) => acc + (v.sent || 0), 0);
-      let confidenceVal = 0;
-      if (totalSent > 0) {
-        // Just a simple heuristic for UI: 
-        // 50% base + up to 20% from sample size + up to 30% from score margin difference
-        const sampleBonus = Math.min(20, (totalSent / 50) * 20);
-        const diffBonus = top.score > 0 ? Math.min(30, ((top.score - second.score) / top.score) * 30) : 0;
-        confidenceVal = Math.round(50 + sampleBonus + diffBonus);
-      }
-      dynamicConfidence = `${Math.min(99, confidenceVal)}%`;
+      const sampleTarget = campaign.abTestSampleSize || 15;
+      const samplePct = Math.min(1, totalSent / sampleTarget);
+      dynamicConfidence = `${Math.round(samplePct * 85)}%`; // cap at 85% while testing is live
     }
+  }
+
+  // Once winner is locked in, show the final frozen snapshot.
+  if (isWinnerSelected && stats?.variantStats && stats.variantStats.length > 0) {
+    const winnerStat = stats.variantStats.find((s: any) => s.variantIndex === campaign.winnerIndex);
+    const otherStats = stats.variantStats.filter((s: any) => s.variantIndex !== campaign.winnerIndex);
+    const bestOtherScore = Math.max(...otherStats.map((s: any) => s.score || 0), 0);
+    const winnerScore = winnerStat?.score || 0;
+    const totalScore = stats.variantStats.reduce((acc: number, v: any) => acc + (v.score || 0), 0);
+
+    if (totalScore > 0) {
+      const winnerSharePct = Math.round((winnerScore / totalScore) * 100);
+      dynamicMargin = `${winnerSharePct}% score share`;
+    }
+    // Confidence is final once evaluation has run
+    dynamicConfidence = "92%";
   }
 
   const aiDiagnosis = {

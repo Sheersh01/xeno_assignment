@@ -5,6 +5,7 @@ import { getCustomers } from "@/lib/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/Dialog";
+import { Skeleton, SkeletonTableRow } from "@/components/ui/Skeleton";
 import { format } from "date-fns";
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -22,6 +23,7 @@ const searchCache = new Map<string, any[]>();
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
@@ -30,14 +32,18 @@ export default function CustomersPage() {
     async function load() {
       if (searchCache.has(debouncedSearch)) {
         setCustomers(searchCache.get(debouncedSearch)!);
+        setLoading(false);
         return;
       }
+      setLoading(true);
       try {
         const data = await getCustomers(debouncedSearch);
         searchCache.set(debouncedSearch, data);
         setCustomers(data);
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     }
     load();
@@ -71,7 +77,11 @@ export default function CustomersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {customers.map(c => (
+            {loading
+              ? Array.from({ length: 8 }).map((_, i) => (
+                  <SkeletonTableRow key={i} cols={5} />
+                ))
+              : customers.map(c => (
               <TableRow key={c.id} onClick={() => setSelectedCustomer(c)} className="cursor-pointer">
                 <TableCell className="font-medium text-[13px]">
                   <div>{c.name}</div>

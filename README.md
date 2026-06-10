@@ -116,6 +116,10 @@ Every Gemini call is wrapped in try/catch with a predictable fallback object. Th
 - **Vercel/Next.js Premium UI Aesthetics**: Refactored the entire frontend to use a strict monochrome color palette (`#000`), subtle glassmorphism (`bg-gradient-to-b from-white/[0.02]`), negative letter-spacing typography, and dynamic glow interactions that match enterprise developer-first styling.
 - **Accurate Global Analytics**: Added a dedicated `GET /stats` backend endpoint leveraging database-level `COUNT()` queries to provide hyper-accurate global metrics on the Dashboard, completely decoupling it from the network payload limitations of the `GET /customers` search route.
 - **Production Resilience**: Hardened Redis connections for Upstash Serverless (TLS + keepAlive), implemented dynamic port binding (`process.env.PORT`) for Render compatibility, added root health-check endpoints, and wrote an idempotent database seed script (`prisma/seed.ts`) that runs safely during cloud deployments.
+- **AI Rate Limit Handling (BullMQ `DelayedError`)**: Replaced naive `setTimeout` retry loops in the Callback Worker with BullMQ's native `DelayedError`. When Gemini returns a 429, the job is instantly stripped from the worker thread and re-enqueued in Redis after 15 seconds — zero blocked workers, zero wasted memory.
+- **Dispatch Worker Production Fix**: Fixed a critical production bug where all dispatch jobs failed silently because the Channel Simulator URL was hardcoded to `localhost:4001`. The URL is now resolved via the `CHANNEL_SIMULATOR_URL` environment variable, enabling the CRM backend and Channel Simulator to communicate as separate cloud services.
+- **Fully Responsive UI**: Redesigned the navigation layer to be adaptive. On desktop, the premium sidebar remains; on mobile/tablet, it auto-hides and a native-style bottom navigation bar appears, making the CRM fully usable on any screen size.
+- **Dynamic AI Diagnosis Panel**: The Campaign Details page now calculates the A/B winner margin % and confidence % in real time from live variant stats instead of showing hardcoded placeholders.
 
 ---
 
@@ -141,6 +145,7 @@ This project is fully configured to be deployed on **Vercel** (Frontend) and **R
   - `DATABASE_URL` (Neon)
   - `REDIS_URL` (Upstash)
   - `GEMINI_API_KEY`
+  - `CHANNEL_SIMULATOR_URL` (Set to your deployed Channel Simulator URL: `https://<simulator-url>.onrender.com`)
 - **Environment Variables (Simulator):**
   - `CRM_WEBHOOK_URL` (Set to the CRM's deployed URL: `https://<crm-url>/webhook/events`)
 

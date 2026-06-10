@@ -5,6 +5,7 @@ import { Users, ShoppingCart, Send, Activity, ArrowUpRight, BrainCircuit, ArrowR
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
+import { Skeleton, SkeletonTableRow } from "@/components/ui/Skeleton";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid } from "recharts";
 import { getDashboardStats, getCampaigns } from "@/lib/api";
 import Link from "next/link";
@@ -15,6 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function DashboardPage() {
   const [stats, setStats] = useState({ customers: 0, orders: 0, campaigns: 0, activeCampaigns: 0, dndCustomers: 0 });
   const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showBrief, setShowBrief] = useState(true);
   const [hoverArea, setHoverArea] = useState(false);
   const [hoverBar, setHoverBar] = useState(false);
@@ -37,6 +39,8 @@ export default function DashboardPage() {
         setCampaigns(campData.slice(0, 5)); // Top 5
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     }
     loadData();
