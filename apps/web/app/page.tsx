@@ -57,7 +57,7 @@ export default function DashboardPage() {
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#222] mb-8">
         <div>
-          <h1 className="text-xl font-medium tracking-tight">{greeting}, Sheersh</h1>
+          <h1 className="text-xl font-medium tracking-tight" suppressHydrationWarning>{greeting}, Sheersh</h1>
           <p className="text-sm text-[#A0A0A0] mt-1">Here is your automated daily summary.</p>
         </div>
         <Link href="/campaigns/new">
@@ -90,7 +90,7 @@ export default function DashboardPage() {
                 <BrainCircuit className="w-5 h-5" />
                 <h2 className="text-base font-medium tracking-tight">AI Daily Brief</h2>
               </div>
-              <Badge variant="outline" className="text-[#A0A0A0] border-[#333]">
+              <Badge variant="outline" className="text-[#A0A0A0] border-[#333]" suppressHydrationWarning>
                 {format(new Date(), 'MMM d, yyyy')}
               </Badge>
             </div>
