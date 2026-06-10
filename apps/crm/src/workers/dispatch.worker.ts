@@ -3,13 +3,15 @@ import axios from "axios";
 import { connection } from "../config/redis";
 import { dispatchQueueName } from "../queues";
 
+const CHANNEL_SIMULATOR_URL = process.env.CHANNEL_SIMULATOR_URL || 'http://localhost:4001';
+
 export const dispatchWorker = new Worker(
   dispatchQueueName,
   async (job) => {
     const { communicationId, customerId, channel, message } = job.data;
 
     // Send to channel simulator
-    await axios.post("http://localhost:4001/send", {
+    await axios.post(`${CHANNEL_SIMULATOR_URL}/send`, {
       communicationId,
       customerId,
       channel,
