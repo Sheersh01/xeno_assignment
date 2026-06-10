@@ -78,7 +78,7 @@ async function fireWebhook(communicationId: string, eventType: string, metadata?
   }
 }
 
-const PORT = 4001;
+const PORT = process.env.PORT || 4001;
 app.listen(PORT, () => {
   console.log(`Channel Simulator running on port ${PORT}`);
 });
