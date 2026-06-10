@@ -6,6 +6,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 const CRM_WEBHOOK_URL = process.env.CRM_WEBHOOK_URL || 'http://localhost:4000/webhook/events';
+
+app.get("/", (req, res) => {
+  res.send(`
+    <html>
+      <body style="font-family: sans-serif; padding: 2rem; text-align: center;">
+        <h1>📡 Xeno Channel Simulator is running!</h1>
+        <p>Listening for POST requests on <code>/send</code></p>
+      </body>
+    </html>
+  `);
+});
+
 app.post('/send', (req, res) => {
   const { communicationId, customerId, channel, message } = req.body;
   

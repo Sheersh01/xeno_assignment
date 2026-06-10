@@ -46,6 +46,18 @@ app.use("/webhook", webhookRoutes);
 app.use("/ai", aiRoutes);
 app.use("/stats", statsRoutes);
 
+app.get("/", (req, res) => {
+  res.send(`
+    <html>
+      <body style="font-family: sans-serif; padding: 2rem; text-align: center;">
+        <h1>🟢 Xeno CRM Backend is running!</h1>
+        <p>Bull Board: <a href="/admin/queues">/admin/queues</a></p>
+        <p>Health Check: <a href="/health">/health</a></p>
+      </body>
+    </html>
+  `);
+});
+
 const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => {
