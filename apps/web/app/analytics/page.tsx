@@ -104,7 +104,7 @@ export default function AnalyticsPage() {
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="min-w-0 flex flex-col transition-colors duration-500 hover:border-white/[0.15]" onMouseEnter={() => setHoverLine(true)} onMouseLeave={() => setHoverLine(false)}>
           <CardHeader className="border-b border-white/[0.05]">
             <CardTitle className={`text-sm font-medium flex items-center gap-2 transition-colors duration-500 ${hoverLine ? 'text-white' : ''}`}>
@@ -145,8 +145,8 @@ export default function AnalyticsPage() {
                   contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', fontSize: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
                   cursor={{ fill: 'rgba(255,255,255,0.02)' }}
                 />
-                <Bar dataKey="delivered" fill={hoverBar ? '#EDEDED' : '#555'} radius={[2, 2, 0, 0]} barSize={16} activeBar={{ fill: '#ffffff' }} />
-                <Bar dataKey="failed" fill={hoverBar ? '#555' : '#222'} radius={[2, 2, 0, 0]} barSize={16} activeBar={{ fill: '#A0A0A0' }} />
+                <Bar dataKey="delivered" fill={hoverBar ? '#10b981' : '#555'} radius={[2, 2, 0, 0]} barSize={16} activeBar={{ fill: '#34d399' }} />
+                <Bar dataKey="failed" fill={hoverBar ? '#ef4444' : '#222'} radius={[2, 2, 0, 0]} barSize={16} activeBar={{ fill: '#f87171' }} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

@@ -86,13 +86,49 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
   const isTestingPhase = isABTest && campaign.status === 'RUNNING' && !campaign.abTestCompleted;
   const isWinnerSelected = campaign.abTestCompleted && typeof campaign.winnerIndex === 'number';
 
-  // Derived AI diagnosis to fulfill UX requirement
+  let dynamicMargin = "0%";
+  let dynamicConfidence = "0%";
+  let dynamicWinner = isWinnerSelected ? `Variant ${String.fromCharCode(65 + campaign.winnerIndex)}` : 'N/A';
+  
+  if (stats?.variantStats && stats.variantStats.length > 0) {
+    const scores = stats.variantStats.map((s: any, i: number) => ({ index: i, score: s.score || 0 }));
+    scores.sort((a: any, b: any) => b.score - a.score);
+    
+    if (scores.length >= 2) {
+      const top = scores[0];
+      const second = scores[1];
+      
+      if (!isWinnerSelected && campaign.status === 'RUNNING') {
+        dynamicWinner = `Variant ${String.fromCharCode(65 + top.index)} (Projected)`;
+      }
+
+      if (second.score > 0) {
+        const marginVal = Math.round(((top.score - second.score) / second.score) * 100);
+        dynamicMargin = `${marginVal}%`;
+      } else if (top.score > 0) {
+        dynamicMargin = "100+%";
+      }
+      
+      // Calculate a "confidence" metric based on sample size and difference
+      const totalSent = stats.variantStats.reduce((acc: number, v: any) => acc + (v.sent || 0), 0);
+      let confidenceVal = 0;
+      if (totalSent > 0) {
+        // Just a simple heuristic for UI: 
+        // 50% base + up to 20% from sample size + up to 30% from score margin difference
+        const sampleBonus = Math.min(20, (totalSent / 50) * 20);
+        const diffBonus = top.score > 0 ? Math.min(30, ((top.score - second.score) / top.score) * 30) : 0;
+        confidenceVal = Math.round(50 + sampleBonus + diffBonus);
+      }
+      dynamicConfidence = `${Math.min(99, confidenceVal)}%`;
+    }
+  }
+
   const aiDiagnosis = {
-    winner: isWinnerSelected ? `Variant ${String.fromCharCode(65 + campaign.winnerIndex)}` : 'Variant B',
-    margin: '42%',
-    reason: campaign.aiInsight || "The strongest predictor of success was urgency-driven messaging targeting dormant users in the afternoon.",
+    winner: dynamicWinner,
+    margin: dynamicMargin,
+    reason: campaign.aiInsight || "Analyzing real-time engagement patterns to determine the strongest predictor of success.",
     actionTaken: isWinnerSelected ? 'Traffic shifted automatically.' : 'Monitoring engagement to determine winner.',
-    confidence: '91%'
+    confidence: dynamicConfidence
   };
 
   return (

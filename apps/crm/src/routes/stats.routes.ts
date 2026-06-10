@@ -12,12 +12,16 @@ router.get("/", async (req, res) => {
     const activeCampaigns = await prisma.campaign.count({
       where: { status: 'RUNNING' }
     });
+    const dndCustomers = await prisma.customer.count({
+      where: { dnd: true }
+    });
 
     res.json({
       totalCustomers,
       totalOrders,
       totalCampaigns,
-      activeCampaigns
+      activeCampaigns,
+      dndCustomers
     });
   } catch (error) {
     console.error("Error fetching stats:", error);

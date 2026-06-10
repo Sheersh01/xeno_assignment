@@ -128,7 +128,14 @@ Return a JSON object with an array "variants" containing exactly 3 objects, each
   }
 }
 
-export async function analyzeSentiment(replyText: string) {
+export class AIRateLimitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AIRateLimitError';
+  }
+}
+
+export async function analyzeSentiment(replyText: string): Promise<string> {
   try {
     if (!apiKey) throw new Error("No API key");
 
@@ -158,9 +165,12 @@ Return a JSON object with a single "sentiment" string matching one of the three 
     });
 
     return JSON.parse(result.response.text()).sentiment;
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message?.includes("429")) {
+      throw new AIRateLimitError("Gemini rate limit hit. Try again later.");
+    }
+    
     console.error("AI Error (analyzeSentiment):", error.message);
-    // Safe fallback
     return "QUESTION";
   }
 }

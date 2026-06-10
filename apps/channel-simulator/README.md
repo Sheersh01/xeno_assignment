@@ -27,6 +27,16 @@ The Channel Simulator mimics the behavior of these external vendors. When the CR
 ## 🛠 Recent Optimizations & Features
 - **Simulated Conversational Webhooks**: Added randomized logic to fire `REPLIED` webhooks shortly after a `DELIVERED` status. This passes a mocked text payload (such as "Unsubscribe me") over the wire to test the CRM's new Sentiment Analysis compliance engines.
 - **Resilient Webhook Flow**: Verified that the simulated randomized webhook intervals (delivering `SENT`, `OPENED`, `FAILED` payloads) correctly integrate with the CRM backend's updated polling schema without desyncing Live Activity Feeds.
+- **Cloud Deployment Compatibility**: Implemented dynamic port binding (`process.env.PORT`) allowing seamless deployment to Render Web Services.
+
+## ☁️ Production Deployment (Render)
+
+Deploy this as a **Web Service** on Render:
+1. **Root Directory:** `apps/channel-simulator`
+2. **Build Command:** `npm install`
+3. **Start Command:** `npm run start` (executes `npx tsx src/index.ts`)
+4. **Environment Variables:**
+   - `CRM_WEBHOOK_URL`: Set to your deployed CRM's webhook endpoint (e.g., `https://<your-crm-url>/webhook/events`).
 
 ## 📦 Setup & Installation
 Since this is part of the larger monorepo, its dependencies are isolated.

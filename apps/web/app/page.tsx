@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState({ customers: 0, orders: 0, campaigns: 0, activeCampaigns: 0 });
+  const [stats, setStats] = useState({ customers: 0, orders: 0, campaigns: 0, activeCampaigns: 0, dndCustomers: 0 });
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [showBrief, setShowBrief] = useState(true);
   const [hoverArea, setHoverArea] = useState(false);
@@ -32,6 +32,7 @@ export default function DashboardPage() {
           orders: statsData.totalOrders,
           campaigns: statsData.totalCampaigns,
           activeCampaigns: statsData.activeCampaigns,
+          dndCustomers: statsData.dndCustomers || 0,
         });
         setCampaigns(campData.slice(0, 5)); // Top 5
       } catch (err) {
@@ -99,20 +100,25 @@ export default function DashboardPage() {
               <div className="md:col-span-1 space-y-4">
                 <div className="pb-4 border-b border-[#222]">
                   <p className="text-[11px] text-[#A0A0A0] uppercase tracking-wider font-semibold mb-1">Activity</p>
-                  <p className="text-2xl font-medium text-[#EDEDED]">{stats.activeCampaigns || 3} campaigns</p>
+                  <p className="text-2xl font-medium text-[#EDEDED]">{stats.activeCampaigns} campaigns</p>
                   <p className="text-[13px] text-[#A0A0A0] mt-1">running today.</p>
                 </div>
                 <div>
                   <p className="text-[11px] text-[#A0A0A0] uppercase tracking-wider font-semibold mb-1">Automation</p>
-                  <p className="text-[14px] text-[#EDEDED] leading-snug">2 customers were automatically moved to DND based on sentiment.</p>
+                  <p className="text-[14px] text-[#EDEDED] leading-snug">{stats.dndCustomers} customers were automatically moved to DND based on sentiment.</p>
                 </div>
               </div>
               
               <div className="md:col-span-2">
                 <p className="text-[11px] text-[#A0A0A0] uppercase tracking-wider font-semibold mb-2">Performance Insight</p>
                 <p className="text-[16px] text-[#EDEDED] leading-relaxed">
-                  {campaigns.length > 0 ? campaigns[0].name : "Recent Campaign"} <strong className="font-semibold text-white">Variant B</strong> generated 42% higher engagement than Variant A. 
-                  The strongest predictor of success was urgency-driven messaging targeting dormant users in the afternoon.
+                  {campaigns.find((c: any) => c.aiInsight) ? (
+                    <span dangerouslySetInnerHTML={{ __html: campaigns.find((c: any) => c.aiInsight).aiInsight.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>') }} />
+                  ) : campaigns.length > 0 ? (
+                    "Your recent campaigns are running. AI performance insights will be generated once they complete."
+                  ) : (
+                    "No campaigns run yet. Launch your first campaign to generate AI insights."
+                  )}
                 </p>
               </div>
               
@@ -120,7 +126,11 @@ export default function DashboardPage() {
                 <div>
                   <p className="text-[11px] text-[#A0A0A0] uppercase tracking-wider font-semibold mb-2">Recommended Action</p>
                   <p className="text-[14px] text-[#EDEDED] leading-snug">
-                    Launch win-back campaign for dormant users based on successful Variant B insights.
+                    {campaigns.find((c: any) => c.aiInsight) 
+                      ? "Review the full campaign performance to apply these learnings to your next audience."
+                      : campaigns.length > 0 
+                      ? "Monitor your active campaigns to discover winning variants."
+                      : "Build your first segment to get started."}
                   </p>
                 </div>
                 <Link href={campaigns.length > 0 ? `/campaigns/${campaigns[0].id}` : "/campaigns"}>

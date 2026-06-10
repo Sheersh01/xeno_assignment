@@ -115,10 +115,44 @@ Every Gemini call is wrapped in try/catch with a predictable fallback object. Th
 - **Live Stats Polling Fix**: Fixed a bug where the Live Activity Feed stats would reset to `0` after the initial page load by aligning the backend API response keys (`sentCount`, `deliveredCount`) with the frontend state expectations.
 - **Vercel/Next.js Premium UI Aesthetics**: Refactored the entire frontend to use a strict monochrome color palette (`#000`), subtle glassmorphism (`bg-gradient-to-b from-white/[0.02]`), negative letter-spacing typography, and dynamic glow interactions that match enterprise developer-first styling.
 - **Accurate Global Analytics**: Added a dedicated `GET /stats` backend endpoint leveraging database-level `COUNT()` queries to provide hyper-accurate global metrics on the Dashboard, completely decoupling it from the network payload limitations of the `GET /customers` search route.
+- **Production Resilience**: Hardened Redis connections for Upstash Serverless (TLS + keepAlive), implemented dynamic port binding (`process.env.PORT`) for Render compatibility, added root health-check endpoints, and wrote an idempotent database seed script (`prisma/seed.ts`) that runs safely during cloud deployments.
 
 ---
 
-## Setup
+## Production Deployment (Vercel & Render)
+
+This project is fully configured to be deployed on **Vercel** (Frontend) and **Render** (Backend & Simulator) using free-tier serverless databases.
+
+### 1. Cloud Databases
+- **Postgres (Neon):** Create a free Neon DB. Ensure you use the exact connection string format.
+- **Redis (Upstash):** Create a free Upstash Redis database. **Important:** Render requires the `rediss://default:` protocol prefix for TLS connections.
+
+### 2. Render (Backend & Channel Simulator)
+- Create two separate Web Services on Render.
+- **Root Directory:** `apps/crm` and `apps/channel-simulator` respectively.
+- **Build Command (CRM):** 
+  ```bash
+  npm install && npx prisma generate && npx prisma db push && npx tsx prisma/seed.ts
+  ```
+  *(Note: The seed script is idempotent and will safely skip if data already exists).*
+- **Build Command (Simulator):** `npm install`
+- **Start Command:** `npm run start` (We added this to `package.json` to run `npx tsx src/index.ts`).
+- **Environment Variables (CRM):**
+  - `DATABASE_URL` (Neon)
+  - `REDIS_URL` (Upstash)
+  - `GEMINI_API_KEY`
+- **Environment Variables (Simulator):**
+  - `CRM_WEBHOOK_URL` (Set to the CRM's deployed URL: `https://<crm-url>/webhook/events`)
+
+### 3. Vercel (Frontend)
+- Deploy the root directory, selecting Next.js as the framework.
+- **Root Directory:** `apps/web`
+- **Environment Variable:** 
+  - `NEXT_PUBLIC_API_URL` (Set to your deployed CRM Render URL).
+
+---
+
+## Local Setup
 
 ### Prerequisites
 
@@ -131,6 +165,9 @@ Every Gemini call is wrapped in try/catch with a predictable fallback object. Th
 `apps/crm/.env`
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/xeno_crm?schema=public"
+# Alternatively, use cloud URLs:
+# DATABASE_URL="postgresql://neondb_owner:***@ep-***.neon.tech/neondb?sslmode=require"
+# REDIS_URL="rediss://default:***@***.upstash.io:6379"
 REDIS_HOST="127.0.0.1"
 REDIS_PORT=6379
 GEMINI_API_KEY="your_google_gemini_api_key"
@@ -160,7 +197,7 @@ npx tsx prisma/seed.ts
 
 ---
 
-## Running
+## Running Locally
 
 Three terminals, run concurrently:
 

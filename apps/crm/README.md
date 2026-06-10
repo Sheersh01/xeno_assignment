@@ -46,6 +46,26 @@ To prevent the main API thread from locking up during mass dispatches or heavy w
 - **Campaign Payload Optimization**: Fixed a critical `Network Error` caused by loading massive relational trees (`campaign -> communications -> events`) for large segments. The `getCampaignById` endpoint now uses Prisma nested pagination (`take: 15` on communications) to keep the JSON payload lightning fast and prevent Node.js memory crashes.
 - **Server-Side Customer Search**: Refactored the `/customers` endpoint to accept a `?query=` parameter, utilizing Prisma's `contains` filter (case-insensitive) to search across millions of records efficiently, limiting returns to `take: 50`.
 - **Accurate Analytics Aggregation**: Replaced naive array-length counting on the frontend with a highly optimized `GET /stats` API that uses native Prisma `COUNT()` operations directly on the database level, bypassing the 50-item network payload limit and ensuring accurate global dashboard metrics.
+- **Production Resilience**: Hardened Redis connections for Upstash Serverless compatibility (adding TLS and keepAlive to prevent `ECONNRESET`), implemented dynamic port binding (`process.env.PORT`) for Render, added root health-check endpoints, and wrote an idempotent database seed script (`prisma/seed.ts`) that runs safely during cloud deployments.
+
+## ☁️ Production Deployment (Render + Neon + Upstash)
+
+This backend is configured for deployment on **Render** using serverless databases.
+
+1. **Root Directory:** `apps/crm`
+2. **Databases Required:** 
+   - A Postgres database from **Neon**
+   - A Redis database from **Upstash** (ensure you use the `rediss://default:` protocol prefix for TLS).
+3. **Build Command:** 
+   ```bash
+   npm install && npx prisma generate && npx prisma db push && npx tsx prisma/seed.ts
+   ```
+   *(Note: The seed script contains a safety check and will safely skip if data already exists).*
+4. **Start Command:** `npm run start`
+5. **Environment Variables:**
+   - `DATABASE_URL`
+   - `REDIS_URL`
+   - `GEMINI_API_KEY`
 
 ## 📦 Setup & Installation
 

@@ -33,6 +33,16 @@ We deliberately avoided standard "generic SaaS templates" or over-used Tailwind 
 - **Live Polling Fix**: Resolved an issue in the `/campaigns/[id]` Live Activity Feed where real-time stats would briefly reset to 0 by perfectly mapping the polling schema to the initial SSR state.
 - **Next.js Premium UI Aesthetics**: Refactored the entire frontend to use a dark monochrome color palette, subtle glassmorphism (`bg-gradient-to-b from-white/[0.02]`), negative letter-spacing typography, and dynamic glow interactions that perfectly mirror modern developer-first tooling.
 
+## ☁️ Production Deployment (Vercel)
+
+This frontend is configured for instant deployment on **Vercel**.
+
+1. Connect your GitHub repository to Vercel.
+2. Select **Next.js** as the Framework Preset.
+3. Set the **Root Directory** to `apps/web`.
+4. Under Environment Variables, add:
+   - `NEXT_PUBLIC_API_URL`: Set this to your deployed CRM Backend URL (e.g., `https://<your-crm-backend>.onrender.com`).
+
 ## 📦 Setup & Installation
 
 ```bash
