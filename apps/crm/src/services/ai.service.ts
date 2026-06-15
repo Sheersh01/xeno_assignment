@@ -6,6 +6,34 @@ const genAI = new GoogleGenerativeAI(apiKey);
 // We will use gemini-2.5-flash since 1.5 is deprecated in this environment
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
+/**
+ * Retries a Gemini API call with exponential backoff on 503 "high demand" errors.
+ * Other errors are re-thrown immediately.
+ */
+async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
+  let lastError: any;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      const isOverloaded =
+        err?.message?.includes("503") ||
+        err?.message?.toLowerCase().includes("high demand") ||
+        err?.message?.toLowerCase().includes("overloaded");
+
+      if (isOverloaded && attempt < maxRetries - 1) {
+        const delayMs = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s
+        console.warn(`[AI] Gemini 503 on attempt ${attempt + 1}. Retrying in ${delayMs / 1000}s...`);
+        await new Promise((r) => setTimeout(r, delayMs));
+        lastError = err;
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError;
+}
+
 export async function generateSegmentFilter(naturalLanguageInput: string) {
   try {
     if (!apiKey) throw new Error("No API key");
@@ -54,13 +82,15 @@ Allowed query fields: totalSpend (object with gt/lt), orderCount (object with gt
 Do not include fields that are not mentioned. Keep the JSON exactly to the schema.
 Input: "${naturalLanguageInput}"`;
 
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
-      }
-    });
+    const result = await withRetry(() =>
+      model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema,
+        },
+      })
+    );
 
     return JSON.parse(result.response.text());
   } catch (error) {
@@ -104,13 +134,15 @@ Return a JSON object with an array "variants" containing exactly 3 objects, each
       required: ["variants"]
     };
 
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
-      }
-    });
+    const result = await withRetry(() =>
+      model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema,
+        },
+      })
+    );
 
     const parsed = JSON.parse(result.response.text());
     // Ensure we always return exactly 3
@@ -156,13 +188,15 @@ Return a JSON object with a single "sentiment" string matching one of the three 
       required: ["sentiment"]
     };
 
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
-      }
-    });
+    const result = await withRetry(() =>
+      model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema,
+        },
+      })
+    );
 
     return JSON.parse(result.response.text()).sentiment;
   } catch (error: any) {
@@ -195,13 +229,15 @@ Return a JSON object with a single "insight" string.`;
       required: ["insight"]
     };
 
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
-      }
-    });
+    const result = await withRetry(() =>
+      model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema,
+        },
+      })
+    );
 
     return JSON.parse(result.response.text()).insight;
   } catch (error) {
@@ -228,13 +264,15 @@ Return a JSON object with "recommendedChannel" and a brief "reason".`;
       required: ["recommendedChannel", "reason"]
     };
 
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
-      }
-    });
+    const result = await withRetry(() =>
+      model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema,
+        },
+      })
+    );
 
     return JSON.parse(result.response.text());
   } catch (error) {
@@ -263,13 +301,15 @@ Return a JSON object with a single "summary" string.`;
       required: ["summary"]
     };
 
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
-      }
-    });
+    const result = await withRetry(() =>
+      model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema,
+        },
+      })
+    );
 
     return JSON.parse(result.response.text());
   } catch (error) {
@@ -297,13 +337,15 @@ Return a JSON object with an "insight" string.`;
       required: ["insight"]
     };
 
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
-      }
-    });
+    const result = await withRetry(() =>
+      model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema,
+        },
+      })
+    );
 
     return JSON.parse(result.response.text()).insight;
   } catch (error) {
