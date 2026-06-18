@@ -71,6 +71,7 @@ export default function CustomersPage() {
             <TableRow className="border-b border-[#222] bg-[#0A0A0A] hover:bg-[#0A0A0A]">
               <TableHead>Name</TableHead>
               <TableHead>City</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Total Spend</TableHead>
               <TableHead>Orders</TableHead>
               <TableHead>Last Order</TableHead>
@@ -79,7 +80,7 @@ export default function CustomersPage() {
           <TableBody>
             {loading
               ? Array.from({ length: 8 }).map((_, i) => (
-                  <SkeletonTableRow key={i} cols={5} />
+                  <SkeletonTableRow key={i} cols={6} />
                 ))
               : customers.map(c => (
               <TableRow key={c.id} onClick={() => setSelectedCustomer(c)} className="cursor-pointer">
@@ -88,6 +89,9 @@ export default function CustomersPage() {
                   <div className="text-[11px] text-[#A0A0A0] font-normal">{c.email}</div>
                 </TableCell>
                 <TableCell className="text-[13px]">{c.city || '—'}</TableCell>
+                <TableCell className="text-[13px]">
+                  {c.dnd ? <span className="text-red-500 font-medium">DND</span> : <span className="text-green-500 font-medium">Active</span>}
+                </TableCell>
                 <TableCell className="text-[13px]">${Number(c.totalSpend).toFixed(2)}</TableCell>
                 <TableCell className="text-[13px]">{c.orderCount}</TableCell>
                 <TableCell className="text-[#A0A0A0] text-[13px]">
@@ -122,6 +126,12 @@ export default function CustomersPage() {
               <span className="text-[10px] text-[#A0A0A0] uppercase tracking-wider font-semibold">City</span>
               <p className="font-medium text-sm">{selectedCustomer?.city || '—'}</p>
             </div>
+            {selectedCustomer?.dnd && (
+              <div className="space-y-1 col-span-2 mt-2 p-3 bg-red-950/20 border border-red-900/30 rounded text-red-400">
+                <span className="text-[10px] uppercase tracking-wider font-semibold">DND Reason</span>
+                <p className="font-medium text-sm mt-1">{selectedCustomer.dndReason || 'Opted out'}</p>
+              </div>
+            )}
           </div>
           
           <div className="mt-4">

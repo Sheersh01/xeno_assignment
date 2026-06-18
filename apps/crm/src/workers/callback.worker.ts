@@ -29,7 +29,8 @@ export const callbackWorker = new Worker(
       } catch (error: any) {
         if (error.name === 'AIRateLimitError') {
           console.warn(`[Callback Worker] AI rate limit hit. Delaying job natively for 15s...`);
-          throw new DelayedError(15000);
+          await job.moveToDelayed(Date.now() + 15000, job.token);
+          throw new DelayedError();
         }
       }
     }

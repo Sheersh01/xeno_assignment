@@ -15,6 +15,9 @@ export async function getCustomers(query?: string) {
       totalSpend: "desc",
     },
     take: 50, // Limit to top 50 to ensure fast response and prevent massive payloads
+    include: {
+      orders: true,
+    },
   });
 }
 

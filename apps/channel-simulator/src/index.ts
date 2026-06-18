@@ -29,6 +29,9 @@ app.post('/send', (req, res) => {
   res.status(202).json({ status: 'accepted' });
 
   // Simulate external provider processing asynchronously
+  // Fire SENT immediately to indicate the provider dispatched it
+  fireWebhook(communicationId, 'SENT');
+  
   setTimeout(() => {
     const isFailed = Math.random() < 0.05; // 5% chance FAILED
     
